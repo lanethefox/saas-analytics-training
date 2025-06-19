@@ -1,0 +1,87 @@
+"""
+SaaS Platform Data Pipeline DAG
+Daily ETL pipeline for Entity-Centric data models
+"""
+
+from datetime import datetime, timedelta
+from airflow import DAG
+from airflow.operators.bash import BashOperator
+from airflow.operators.dummy import DummyOperator
+
+# Default arguments
+default_args = {
+    'owner': 'data-team',
+    'depends_on_past': False,
+    'start_date': datetime(2024, 1, 1),
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
+}
+
+# DAG definition
+dag = DAG(
+    'saas_platform_daily_etl',
+    default_args=default_args,
+    description='Daily ETL pipeline for SaaS platform',
+    schedule_interval='0 6 * * *',  # Daily at 6 AM UTC
+    catchup=False,
+    tags=['saas', 'etl', 'daily'],
+)
+
+# Start task
+start_task = DummyOperator(
+    task_id='start_pipeline',
+    dag=dag,
+)
+
+# dbt run - staging models
+dbt_staging = BashOperator(
+    task_id='dbt_run_staging',
+    bash_command='cd /opt/dbt_project && dbt run --select tag:staging',
+    dag=dag,
+)
+
+# dbt run - intermediate models  
+dbt_intermediate = BashOperator(
+    task_id='dbt_run_intermediate',
+    bash_command='cd /opt/dbt_project && dbt run --select tag:intermediate',
+    dag=dag,
+)
+
+# dbt run - entity models
+dbt_entities = BashOperator(
+    task_id='dbt_run_entities',
+    bash_command='cd /opt/dbt_project && dbt run --select tag:entities',
+    dag=dag,
+)
+
+# dbt run - mart models
+dbt_marts = BashOperator(
+    task_id='dbt_run_marts', 
+    bash_command='cd /opt/dbt_project && dbt run --select tag:marts',
+    dag=dag,
+)
+
+# dbt test
+dbt_test = BashOperator(
+    task_id='dbt_test',
+    bash_command='cd /opt/dbt_project && dbt test',
+    dag=dag,
+)
+
+# ML feature refresh
+ml_features = BashOperator(
+    task_id='refresh_ml_features',
+    bash_command='echo "Refreshing ML features..." && sleep 5',
+    dag=dag,
+)
+
+# End task
+end_task = DummyOperator(
+    task_id='end_pipeline',
+    dag=dag,
+)
+
+# Define dependencies
+start_task >> dbt_staging >> dbt_intermediate >> dbt_entities >> dbt_marts >> dbt_test >> ml_features >> end_task

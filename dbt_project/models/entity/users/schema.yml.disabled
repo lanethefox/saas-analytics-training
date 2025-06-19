@@ -1,0 +1,180 @@
+version: 2
+
+models:
+  - name: entity_users
+    description: |
+      Entity-Centric Model: Users (Atomic/Current State)
+      
+      This table provides a comprehensive view of current user state with behavioral analytics,
+      engagement scoring, and feature adoption metrics. It serves as the primary source for
+      user experience optimization, feature adoption tracking, personalization, and support
+      prioritization.
+      
+      Key Features:
+      - Real-time engagement scoring based on multi-dimensional activity
+      - Feature adoption tracking across categories and depth
+      - Behavioral pattern classification for personalization
+      - Churn risk assessment and user value tiering
+      - Activity recency and lifecycle stage tracking
+    
+    columns:
+      - name: user_id
+        description: Unique identifier for the user
+        tests:
+          - not_null
+          - unique
+      
+      - name: user_key
+        description: Natural business key for the user
+        tests:
+          - not_null
+      
+      - name: account_id
+        description: Associated customer account ID
+        tests:
+          - not_null
+      
+      - name: engagement_score
+        description: Overall engagement score (0-1 scale) based on 30-day activity
+        tests:
+          - not_null
+      
+      - name: user_engagement_tier
+        description: User classification (power_user, regular_user, casual_user, light_user, inactive_user)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['power_user', 'regular_user', 'casual_user', 'light_user', 'inactive_user']
+      
+      - name: churn_risk_level
+        description: Risk assessment based on inactivity (high, medium, low, none)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['high', 'medium', 'low', 'none']
+      
+      - name: user_value_tier
+        description: Value classification based on engagement and feature usage
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['high', 'medium', 'low', 'very_low']
+
+  - name: entity_users_history
+    description: |
+      Entity-Centric Model: Users (Change History)
+      
+      This table tracks the complete evolution of user engagement, feature adoption progressions,
+      and behavioral changes over time. It enables sophisticated user journey analysis, behavioral
+      pattern recognition, A/B test analysis, and adoption funnel optimization.
+      
+      Key Features:
+      - Complete audit trail of engagement changes
+      - Feature adoption progression tracking
+      - Risk and value tier transitions
+      - Behavioral pattern evolution
+      - Temporal validity for point-in-time analysis
+    
+    columns:
+      - name: user_history_id
+        description: Unique identifier for each history record
+        tests:
+          - not_null
+          - unique
+      
+      - name: user_id
+        description: User identifier
+        tests:
+          - not_null
+      
+      - name: change_type
+        description: Type of change recorded
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['user_created', 'engagement_change', 'status_change', 'role_change', 
+                      'adoption_change', 'activity_change', 'tier_change', 'risk_change', 'other_change']
+      
+      - name: valid_from
+        description: Timestamp when this record became valid
+        tests:
+          - not_null
+      
+      - name: valid_to
+        description: Timestamp when this record stopped being valid (null for current)
+      
+      - name: is_current
+        description: Flag indicating if this is the current record
+        tests:
+          - not_null
+      
+      - name: engagement_delta
+        description: Change in engagement score from previous state
+        tests:
+          - not_null
+      
+      - name: features_adopted_delta
+        description: Change in features used from previous state
+        tests:
+          - not_null
+
+  - name: entity_users_weekly
+    description: |
+      Entity-Centric Model: Users (Weekly Strategic Grain)
+      
+      This table provides weekly aggregations of user engagement metrics optimized for product
+      analytics, user experience reporting, and retention analysis. It supports cohort analysis,
+      week-over-week trending, and lifecycle stage progression tracking.
+      
+      Key Features:
+      - Weekly engagement metrics across all activity dimensions
+      - Feature adoption patterns by week
+      - Activity classification and engagement scoring
+      - Lifecycle stage tracking
+      - Retention cohort analysis support
+    
+    columns:
+      - name: user_id
+        description: User identifier
+        tests:
+          - not_null
+      
+      - name: week_start_date
+        description: Start date of the week (Monday)
+        tests:
+          - not_null
+      
+      - name: weekly_engagement_score
+        description: Engagement score for this specific week (0-1 scale)
+        tests:
+          - not_null
+      
+      - name: weekly_activity_level
+        description: Activity classification for the week
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['highly_active', 'moderately_active', 'minimally_active', 'inactive']
+      
+      - name: user_lifecycle_stage
+        description: User's lifecycle stage during this week
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['not_yet_created', 'first_week', 'onboarding', 'developing', 'established']
+      
+      - name: cohort_month
+        description: Month when user was created (for cohort analysis)
+        tests:
+          - not_null
+      
+      - name: weeks_since_signup
+        description: Number of weeks since user creation
+        tests:
+          - not_null
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - user_id
+            - week_start_date

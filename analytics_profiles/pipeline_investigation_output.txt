@@ -1,0 +1,67 @@
+   schema_name   
+-----------------
+ analytics
+ dbt_test__audit
+ entity
+ intermediate
+ mart
+ public
+ raw
+ staging
+(8 rows)
+
+    layer     |    entity     | count  
+--------------+---------------+--------
+ entity       | customers     |    100
+ entity       | devices       |   1205
+ entity       | subscriptions |    441
+ entity       | users         |    337
+ intermediate | customers     |    100
+ staging      | customers     | 126887
+(6 rows)
+
+ total_records | unique_accounts 
+---------------+-----------------
+           100 |             100
+(1 row)
+
+ subscription_account_id | subscription_status | monthly_recurring_revenue |  plan_type   
+-------------------------+---------------------+---------------------------+--------------
+ 10000098                | Cancelled           |                    399.99 | Starter
+ 10000093                | Cancelled           |                    399.99 | Starter
+ 10000092                | Cancelled           |                    399.99 | Professional
+ 10000086                | Trial               |                    399.99 | Starter
+ 10000081                | Other               |                    399.99 | Enterprise
+ 10000077                | Trial               |                    399.99 | Starter
+ 10000068                | Active              |                    399.99 | Professional
+ 10000066                | Other               |                    399.99 | Starter
+ 10000065                | Trial               |                    399.99 | Enterprise
+ 10000054                | Other               |                    399.99 | Enterprise
+ 10000053                | Trial               |                    399.99 | Professional
+ 10000047                | Trial               |                    399.99 | Professional
+ 10000045                | Other               |                    399.99 | Professional
+ 10000038                | Cancelled           |                    399.99 | Enterprise
+ 10000037                | Trial               |                    399.99 | Enterprise
+ 10000036                | Cancelled           |                    399.99 | Starter
+ 10000033                | Active              |                    399.99 | Enterprise
+ 10000030                | Trial               |                    399.99 | Enterprise
+ 10000025                | Trial               |                    399.99 | Enterprise
+ 10000009                | Cancelled           |                    399.99 | Starter
+(20 rows)
+
+    entity     | column_name |     data_type     
+---------------+-------------+-------------------
+ customers     | account_id  | character varying
+ subscriptions | account_id  | character varying
+ users         | account_id  | integer
+ locations     | account_id  | integer
+(4 rows)
+
+               issue                | count | percentage 
+------------------------------------+-------+------------
+ Customers with $0 MRR              |   100 | 100%
+ Subscriptions with >$0 MRR         |   241 | 54.65%
+ Devices with health < 1            |  1205 | 100.00%
+ Customer-Subscription Join Success |     0 | 0.00%
+(4 rows)
+

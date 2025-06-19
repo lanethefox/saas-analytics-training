@@ -1,0 +1,47 @@
+# Environment
+.env
+venv/
+*.pyc
+__pycache__/
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# dbt
+dbt_project/target/
+dbt_project/dbt_packages/
+dbt_project/logs/
+
+# Data files
+data/synthetic/
+data/test_*/
+*.csv
+*.json
+*.parquet
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+temp_*
+
+# Reports
+reports/
+
+# Database dumps
+*.sql.gz
+*.dump
+
+# Credentials
+credentials/
+*.pem
+*.key

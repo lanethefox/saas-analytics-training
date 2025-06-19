@@ -1,0 +1,33 @@
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install MLflow and dependencies
+RUN pip install --upgrade pip && \
+    pip install \
+    mlflow==2.8.1 \
+    psycopg2-binary==2.9.9 \
+    boto3==1.34.0 \
+    scikit-learn==1.3.2 \
+    pandas==2.1.3 \
+    numpy==1.25.2
+
+# Create mlflow user
+RUN useradd -m -s /bin/bash mlflow
+
+# Create directories
+RUN mkdir -p /mlflow/artifacts && \
+    chown -R mlflow:mlflow /mlflow
+
+USER mlflow
+WORKDIR /mlflow
+
+# Expose port
+EXPOSE 5000
+
+# Default command (will be overridden in docker-compose)
+CMD ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000"]

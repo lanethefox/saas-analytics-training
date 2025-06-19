@@ -1,0 +1,133 @@
+version: 2
+
+models:
+  - name: entity_locations
+    description: |
+      Entity-Centric Model: Locations (Atomic/Current State)
+      
+      This table provides a comprehensive view of current location operational status with
+      device counts, performance metrics, and customer satisfaction indicators. It serves as
+      the primary source for operations management, customer success planning, expansion
+      analysis, and support prioritization.
+      
+      Key Features:
+      - Real-time device infrastructure and connectivity monitoring
+      - Operational health scoring based on activity and quality metrics
+      - Customer satisfaction scoring and support prioritization
+      - Expansion opportunity identification
+      - Lifecycle stage tracking from new to veteran locations
+    
+    columns:
+      - name: location_id
+        description: Unique identifier for the location
+        tests:
+          - not_null
+          - unique
+      
+      - name: location_key
+        description: Surrogate key for the location
+        tests:
+          - not_null
+      
+      - name: account_id
+        description: Associated customer account ID
+        tests:
+          - not_null
+      
+      - name: operational_status
+        description: Current operational status of the location
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['operational', 'offline', 'not_operational']
+      
+      - name: operational_health_score
+        description: Composite health score (0-1 scale)
+        tests:
+          - not_null
+
+  - name: entity_locations_history
+    description: |
+      Entity-Centric Model: Locations (Change History)
+      
+      This table tracks location operational evolution including device changes, performance
+      shifts, and customer feedback over time. It enables operational excellence analysis,
+      location performance optimization, expansion planning, and customer success tracking.
+      
+      Key Features:
+      - Device infrastructure change tracking
+      - Operational health evolution over time
+      - Customer satisfaction trend analysis
+      - Revenue and volume change tracking
+      - Support incident history
+    
+    columns:
+      - name: location_history_id
+        description: Unique identifier for each history record
+        tests:
+          - not_null
+          - unique
+      
+      - name: location_id
+        description: Location identifier
+        tests:
+          - not_null
+      
+      - name: change_type
+        description: Type of change recorded
+        tests:
+          - not_null
+      
+      - name: valid_from
+        description: Timestamp when this record became valid
+        tests:
+          - not_null
+      
+      - name: is_current
+        description: Flag indicating if this is the current record
+        tests:
+          - not_null
+
+  - name: entity_locations_weekly
+    description: |
+      Entity-Centric Model: Locations (Weekly Strategic Grain)
+      
+      This table provides weekly aggregations of location performance optimized for operational
+      reporting, regional analysis, and strategic planning. It supports customer success
+      metrics, expansion planning, and operational efficiency trending.
+      
+      Key Features:
+      - Weekly operational metrics and device utilization
+      - Volume and activity pattern analysis
+      - Quality issue tracking and trending
+      - Expansion readiness assessment
+      - Revenue estimation and trending
+    
+    columns:
+      - name: location_id
+        description: Location identifier
+        tests:
+          - not_null
+      
+      - name: week_start_date
+        description: Start date of the week (Monday)
+        tests:
+          - not_null
+      
+      - name: weekly_operational_score
+        description: Operational health score for this week (0-1 scale)
+        tests:
+          - not_null
+      
+      - name: weekly_activity_level
+        description: Activity classification for the week
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['high_activity', 'medium_activity', 'low_activity', 'minimal_activity', 'no_activity']
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - location_id
+            - week_start_date

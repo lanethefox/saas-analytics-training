@@ -1,0 +1,306 @@
+# Marketing Platform Data Sources
+# Updated to match actual loaded table schemas
+
+version: 2
+
+sources:
+  - name: marketing
+    description: "Multi-channel marketing campaign data and performance metrics"
+    database: saas_platform_dev
+    schema: raw
+    meta:
+      owner: "Marketing & Growth"
+      business_domain: "Digital Marketing & Attribution"
+    
+    tables:
+      # Google Ads
+      - name: google_ads_campaigns
+        identifier: google_ads_campaigns
+        description: "Google Ads campaigns"
+        columns:
+          - name: campaign_id
+            description: "Google Ads campaign ID"
+            tests:
+              - unique
+              - not_null
+          - name: campaign_name
+            description: "Campaign name"
+          - name: status
+            description: "Campaign status (active, paused, ended)"
+          - name: created_at
+            description: "Campaign creation timestamp"
+
+      - name: google_ads_campaign_performance
+        identifier: google_ads_campaign_performance
+        description: "Daily Google Ads campaign performance metrics"
+        columns:
+          - name: performance_id
+            description: "Performance record ID"
+            tests:
+              - unique
+              - not_null
+          - name: campaign_id
+            description: "Campaign ID reference"
+            tests:
+              - not_null
+              - relationships:
+                  to: source('marketing', 'google_ads_campaigns')
+                  field: campaign_id
+          - name: date
+            description: "Performance date"
+          - name: impressions
+            description: "Ad impressions"
+          - name: clicks
+            description: "Ad clicks"
+          - name: cost
+            description: "Campaign cost"
+
+      # Meta (Facebook/Instagram) Ads
+      - name: meta_ads_campaign_insights
+        identifier: meta_campaigns
+        description: "Meta Ads campaign insights and performance data"
+        columns:
+          - name: campaign_id
+            description: "Meta campaign ID"
+            tests:
+              - unique
+              - not_null
+          - name: campaign_name
+            description: "Campaign name"
+          - name: objective
+            description: "Campaign objective"
+          - name: account_id
+            description: "Ad account ID"
+          - name: created_at
+            description: "Campaign creation timestamp"
+
+      - name: facebook_campaigns
+        identifier: facebook_campaigns
+        description: "Facebook campaign data"
+        columns:
+          - name: campaign_id
+            description: "Facebook campaign ID"
+            tests:
+              - unique
+              - not_null
+          - name: campaign_name
+            description: "Campaign name"
+          - name: objective
+            description: "Campaign objective"
+          - name: created_at
+            description: "Campaign creation timestamp"
+
+      - name: meta_campaigns
+        identifier: meta_campaigns
+        description: "Meta platform campaigns"
+        columns:
+          - name: campaign_id
+            description: "Meta campaign ID"
+            tests:
+              - unique
+              - not_null
+          - name: campaign_name
+            description: "Campaign name"
+          - name: objective
+            description: "Campaign objective"
+          - name: account_id
+            description: "Ad account ID"
+          - name: created_at
+            description: "Campaign creation timestamp"
+
+      # LinkedIn Ads
+      - name: linkedin_campaigns
+        identifier: linkedin_campaigns
+        description: "LinkedIn advertising campaigns"
+        columns:
+          - name: campaign_id
+            description: "LinkedIn campaign ID"
+            tests:
+              - unique
+              - not_null
+          - name: campaign_name
+            description: "Campaign name"
+          - name: type
+            description: "Campaign type"
+          - name: account_id
+            description: "Ad account ID"
+          - name: created_at
+            description: "Campaign creation timestamp"
+
+      - name: linkedin_ads_campaign_analytics
+        identifier: linkedin_ads_campaign_analytics
+        description: "LinkedIn performance metrics"
+        columns:
+          - name: analytics_id
+            description: "Analytics record ID"
+            tests:
+              - unique
+              - not_null
+          - name: campaign_id
+            description: "Campaign reference"
+            tests:
+              - not_null
+              - relationships:
+                  to: source('marketing', 'linkedin_campaigns')
+                  field: campaign_id
+          - name: date
+            description: "Analytics date"
+          - name: impressions
+            description: "Ad impressions"
+          - name: clicks
+            description: "Ad clicks"
+          - name: cost
+            description: "Campaign cost"
+
+      # Email Marketing (Iterable)
+      - name: iterable_campaigns
+        identifier: iterable_campaigns
+        description: "Email marketing campaigns"
+        columns:
+          - name: campaign_id
+            description: "Iterable campaign ID"
+            tests:
+              - unique
+              - not_null
+          - name: campaign_name
+            description: "Campaign name"
+          - name: campaign_type
+            description: "Email/SMS/Push campaign type"
+          - name: created_at
+            description: "Campaign creation timestamp"
+
+      - name: iterable_email_events
+        identifier: iterable_email_events
+        description: "Email engagement events"
+        columns:
+          - name: event_id
+            description: "Email event ID"
+            tests:
+              - unique
+              - not_null
+          - name: campaign_id
+            description: "Campaign reference"
+            tests:
+              - not_null
+              - relationships:
+                  to: source('marketing', 'iterable_campaigns')
+                  field: campaign_id
+          - name: event_type
+            description: "Event type (sent, delivered, opened, etc.)"
+          - name: timestamp
+            description: "Event timestamp"
+      
+      # Attribution and Lead Tracking
+      - name: attribution_touchpoints
+        identifier: attribution_touchpoints
+        description: "Multi-touch attribution tracking across all marketing channels"
+        columns:
+          - name: touchpoint_id
+            description: "Unique touchpoint identifier"
+            tests:
+              - unique
+              - not_null
+          - name: lead_id
+            description: "Associated lead ID"
+          - name: channel
+            description: "Marketing channel (google, meta, linkedin, etc.)"
+          - name: campaign_id
+            description: "Campaign identifier"
+          - name: touchpoint_type
+            description: "Type of touchpoint (first_touch, last_touch, etc.)"
+          - name: timestamp
+            description: "Touchpoint timestamp"
+          - name: attribution_weight
+            description: "Weight for multi-touch attribution"
+      
+      - name: marketing_qualified_leads
+        identifier: marketing_qualified_leads
+        description: "Marketing qualified leads (MQLs) from all sources"
+        columns:
+          - name: lead_id
+            description: "Unique lead identifier"
+            tests:
+              - unique
+              - not_null
+          - name: email
+            description: "Lead email address"
+          - name: company_name
+            description: "Company name"
+          - name: lead_source
+            description: "Original lead source"
+          - name: lead_score
+            description: "Lead qualification score"
+          - name: mql_date
+            description: "Date qualified as MQL"
+          - name: created_at
+            description: "Lead creation timestamp"
+      
+      # Web Analytics
+      - name: google_analytics_sessions
+        identifier: google_analytics_sessions
+        description: "Website session data from Google Analytics"
+        columns:
+          - name: session_id
+            description: "GA session identifier"
+            tests:
+              - unique
+              - not_null
+          - name: user_id
+            description: "GA user ID"
+          - name: source
+            description: "Traffic source"
+          - name: medium
+            description: "Traffic medium"
+          - name: campaign
+            description: "Campaign name"
+          - name: landing_page
+            description: "Session landing page"
+          - name: session_date
+            description: "Session date"
+          - name: bounce_rate
+            description: "Session bounce rate"
+          - name: session_duration
+            description: "Duration in seconds"
+          - name: page_views
+            description: "Number of pages viewed"
+      
+      # Additional Campaign Tables
+      - name: facebook_ads_campaigns
+        identifier: facebook_ads_campaigns
+        description: "Facebook Ads campaign data"
+        columns:
+          - name: campaign_id
+            description: "Facebook campaign ID"
+            tests:
+              - unique
+              - not_null
+          - name: campaign_name
+            description: "Campaign name"
+          - name: objective
+            description: "Campaign objective"
+          - name: status
+            description: "Campaign status"
+          - name: daily_budget
+            description: "Daily budget amount"
+          - name: created_at
+            description: "Campaign creation timestamp"
+      
+      - name: linkedin_ads_campaigns
+        identifier: linkedin_ads_campaigns
+        description: "LinkedIn Ads campaign data"
+        columns:
+          - name: campaign_id
+            description: "LinkedIn campaign ID"
+            tests:
+              - unique
+              - not_null
+          - name: campaign_name
+            description: "Campaign name"
+          - name: campaign_type
+            description: "Campaign type"
+          - name: status
+            description: "Campaign status"
+          - name: daily_budget
+            description: "Daily budget amount"
+          - name: created_at
+            description: "Campaign creation timestamp"

@@ -1,0 +1,75 @@
+{{
+    config(
+        materialized = 'view'
+    )
+}}
+
+with source as (
+    select * from {{ source('hubspot', 'email_campaigns') }}
+),
+
+renamed as (
+    select
+        -- Primary key
+        campaign_id,
+        
+        -- Campaign identifiers
+        campaign_name,
+        campaign_subject,
+        campaign_type,
+        campaign_subtype,
+        
+        -- Campaign content
+        from_name,
+        from_email,
+        reply_to_email,
+        
+        -- Campaign settings
+        subscription_type_id,
+        content_id,
+        email_body,
+        
+        -- Metrics
+        num_included,
+        num_queued,
+        num_sent,
+        num_delivered,
+        num_opened,
+        num_clicked,
+        num_replied,
+        num_unsubscribed,
+        num_bounced,
+        num_spam_reports,
+        
+        -- Rates
+        open_rate,
+        click_rate,
+        click_through_rate,
+        reply_rate,
+        unsubscribe_rate,
+        bounce_rate,
+        delivered_rate,
+        spam_report_rate,
+        
+        -- Status and dates
+        campaign_status,
+        sent_at,
+        scheduled_at,
+        created_at,
+        updated_at,
+        
+        -- Metadata
+        created_by,
+        updated_by,
+        app_id,
+        app_name,
+        
+        -- Flags
+        is_published,
+        is_archived
+        
+    from source
+    where not coalesce(is_archived, false)
+)
+
+select * from renamed

@@ -1,0 +1,151 @@
+version: 2
+
+models:
+  - name: entity_subscriptions
+    description: |
+      Entity-Centric Model: Subscriptions (Atomic/Current State)
+      
+      This table provides a comprehensive view of current subscription state with revenue
+      calculations, payment health metrics, and lifecycle management. It serves as the primary
+      source for revenue reporting, billing management, expansion opportunity identification,
+      and financial planning.
+      
+      Key Features:
+      - Accurate MRR/ARR calculations with multi-interval support
+      - Payment health scoring based on invoice and charge history
+      - Churn risk assessment and revenue-at-risk calculations
+      - Expansion opportunity scoring for growth initiatives
+      - Lifecycle stage tracking from trial through maturity
+    
+    columns:
+      - name: subscription_id
+        description: Unique identifier for the subscription
+        tests:
+          - not_null
+          - unique
+      
+      - name: subscription_key
+        description: Surrogate key for the subscription
+        tests:
+          - not_null
+      
+      - name: account_id
+        description: Associated customer account ID
+        tests:
+          - not_null
+      
+      - name: subscription_status
+        description: Current status of the subscription
+        tests:
+          - not_null
+      
+      - name: monthly_recurring_revenue
+        description: Monthly recurring revenue in USD
+        tests:
+          - not_null
+      
+      - name: churn_risk_score
+        description: Risk score (0-100, higher = more risk)
+        tests:
+          - not_null
+      
+      - name: payment_health_score
+        description: Payment health score (0-100, higher = healthier)
+        tests:
+          - not_null
+
+  - name: entity_subscriptions_history
+    description: |
+      Entity-Centric Model: Subscriptions (Change History)
+      
+      This table tracks the complete subscription lifecycle including trials, conversions,
+      upgrades, downgrades, and churn events. It enables customer lifetime value modeling,
+      subscription economics analysis, pricing optimization, and churn analysis.
+      
+      Key Features:
+      - Complete lifecycle tracking from trial to churn
+      - Revenue change tracking for expansion/contraction
+      - Health score evolution over time
+      - Risk classification transitions
+      - Temporal validity for point-in-time analysis
+    
+    columns:
+      - name: subscription_history_id
+        description: Unique identifier for each history record
+        tests:
+          - not_null
+          - unique
+      
+      - name: subscription_id
+        description: Subscription identifier
+        tests:
+          - not_null
+      
+      - name: change_type
+        description: Type of change recorded
+        tests:
+          - not_null
+      
+      - name: valid_from
+        description: Timestamp when this record became valid
+        tests:
+          - not_null
+      
+      - name: is_current
+        description: Flag indicating if this is the current record
+        tests:
+          - not_null
+      
+      - name: mrr_change_amount
+        description: Change in MRR from previous state
+        tests:
+          - not_null
+
+  - name: entity_subscriptions_monthly
+    description: |
+      Entity-Centric Model: Subscriptions (Monthly Strategic Grain)
+      
+      This table provides monthly aggregations of subscription performance optimized for
+      financial reporting, SaaS metrics calculation, and strategic planning. It supports
+      growth accounting, cohort revenue analysis, and investor metrics.
+      
+      Key Features:
+      - Monthly revenue snapshots for financial reporting
+      - Growth accounting components (new, expansion, churn, contraction)
+      - Cohort tracking for retention analysis
+      - SaaS metrics support (MRR, ARR, retention rates)
+      - Strategic planning metrics
+    
+    columns:
+      - name: subscription_id
+        description: Subscription identifier
+        tests:
+          - not_null
+      
+      - name: month_start_date
+        description: Start date of the month
+        tests:
+          - not_null
+      
+      - name: subscription_state
+        description: State of subscription during this month
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['active', 'new', 'churned', 'inactive']
+      
+      - name: monthly_recurring_revenue
+        description: MRR for this subscription in this month
+        tests:
+          - not_null
+      
+      - name: cohort_month
+        description: Month when subscription started (for cohort analysis)
+        tests:
+          - not_null
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - subscription_id
+            - month_start_date

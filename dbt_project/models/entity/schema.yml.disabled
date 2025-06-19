@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: entity_layer
+    description: |
+      Entity-Centric Modeling (ECM) layer implementing the three-table pattern for each 
+      of the seven core business entities. Each entity consists of:
+      
+      1. **Atomic Tables**: Current-state views with real-time metrics for operational analytics
+      2. **History Tables**: Complete change tracking (SCD Type 2) for temporal analysis
+      3. **Grain Tables**: Time-based aggregations optimized for analytical queries
+      
+      This architecture provides:
+      - Simplified SQL for business users (single-table queries)
+      - Optimized performance for cloud data warehouses
+      - Complete temporal analytics capabilities
+      - Strategic pre-aggregation for common access patterns

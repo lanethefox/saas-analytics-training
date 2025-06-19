@@ -1,0 +1,120 @@
+version: 2
+
+models:
+  - name: entity_customers
+    description: |
+      Atomic customer entity table containing current-state view with real-time health scores, 
+      MRR, usage metrics, and behavioral attributes. This is the primary table for operational 
+      analytics, customer health monitoring, and real-time dashboards.
+    
+    columns:
+      - name: account_id
+        description: Unique identifier for the customer
+        tests:
+          - unique
+          - not_null
+      
+      - name: company_name
+        description: Name of the customer company
+        tests:
+          - not_null
+      
+      - name: customer_health_score
+        description: |
+          Composite health score (0-100) based on:
+          - MRR component (30%)
+          - User engagement (25%)  
+          - Device health (25%)
+          - User activation (20%)
+        tests:
+          - not_null
+      
+      - name: churn_risk_score
+        description: |
+          Risk score (0-100) indicating likelihood of churn.
+          Higher values indicate higher risk.
+        tests:
+          - not_null
+      
+      - name: monthly_recurring_revenue
+        description: Current MRR for all active subscriptions
+        tests:
+          - not_null
+      
+      - name: device_events_30d
+        description: Total device events in the last 30 days
+        tests:
+          - not_null
+
+  - name: entity_customers_history
+    description: |
+      Complete audit trail of customer state changes implementing SCD Type 2 pattern.
+      Tracks subscription modifications, health score changes, and behavioral shifts
+      for customer journey analysis and attribution.
+    
+    columns:
+      - name: account_id
+        description: Customer identifier
+        tests:
+          - not_null
+      
+      - name: valid_from
+        description: Start timestamp for this record version
+        tests:
+          - not_null
+      
+      - name: valid_to
+        description: End timestamp for this record version (NULL for current)
+      
+      - name: change_type
+        description: Type of change that created this record
+        tests:
+          - not_null
+          - accepted_values:
+              values: 
+                - new_customer
+                - status_change
+                - tier_change
+                - mrr_change
+                - health_score_change
+                - subscription_change
+                - engagement_change
+                - initial_load
+                - closed
+      
+      - name: mrr_change_amount
+        description: Change in MRR from previous state
+        tests:
+          - not_null
+
+  - name: entity_customers_daily
+    description: |
+      Daily customer snapshots optimized for trend analysis, cohort studies, 
+      and executive reporting. Pre-calculates trailing metrics and growth rates
+      for fast analytical queries.
+    
+    columns:
+      - name: account_id
+        description: Customer identifier
+        tests:
+          - not_null
+      
+      - name: snapshot_date
+        description: Date of the snapshot
+        tests:
+          - not_null
+      
+      - name: mrr_30d_growth_rate
+        description: 30-day MRR growth rate percentage
+      
+      - name: health_trajectory_30d
+        description: Customer health trend over last 30 days
+        tests:
+          - accepted_values:
+              values: [new, improving, declining, stable]
+      
+      - name: mrr_trajectory_30d
+        description: MRR trend over last 30 days
+        tests:
+          - accepted_values:
+              values: [new, expanding, contracting, stable]

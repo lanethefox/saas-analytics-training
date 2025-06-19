@@ -1,0 +1,79 @@
+version: 2
+
+models:
+  # Customer Success Mart Models
+  - name: mart_customer_success__health
+    description: >
+      Executive dashboard for customer health monitoring. Combines subscription health,
+      usage patterns, and engagement metrics to provide comprehensive customer insights
+      for proactive customer success management.
+    columns:
+      - name: account_id
+        description: Primary customer account identifier
+        tests:
+          - unique
+          - not_null
+      - name: company_name
+        description: Customer company name
+        tests:
+          - not_null
+      - name: overall_health_score
+        description: Composite health score (0-100)
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: revenue_health
+        description: Revenue-based health component (0-100)
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: usage_health
+        description: Usage-based health component (0-100)
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: engagement_health
+        description: User engagement health component (0-100)
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: churn_risk_score
+        description: Churn risk assessment (0-100, higher = more risk)
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: health_trend
+        description: Health score trend direction
+        tests:
+          - accepted_values:
+              values: ['improving', 'stable', 'declining', 'new_customer']
+      - name: customer_segment
+        description: Customer segmentation for CS prioritization
+        tests:
+          - accepted_values:
+              values: ['strategic', 'enterprise', 'growth', 'standard', 'at_risk']
+      - name: recommended_action
+        description: Primary recommended CS action
+        tests:
+          - not_null
+      - name: monthly_recurring_revenue
+        description: Current MRR
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - account_id
+          tags: ['uniqueness']

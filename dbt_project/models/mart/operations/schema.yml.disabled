@@ -1,0 +1,126 @@
+version: 2
+
+models:
+  # Operations Mart Models
+  - name: mart_operations__performance
+    description: >
+      Operations performance dashboard providing comprehensive view of device health,
+      location efficiency, and operational KPIs. Supports SLA monitoring and 
+      operational excellence initiatives.
+    columns:
+      - name: location_id
+        description: Primary location identifier
+        tests:
+          - not_null
+      - name: location_name
+        description: Location name
+        tests:
+          - not_null
+      - name: account_id
+        description: Customer account
+        tests:
+          - not_null
+      - name: total_devices
+        description: Total device count
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: active_devices
+        description: Count of active devices
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: device_availability
+        description: Device availability percentage
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: mean_time_to_repair
+        description: Average MTTR in hours
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: mean_time_between_failures
+        description: Average MTBF in hours
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: operational_efficiency
+        description: Overall operational efficiency score (0-100)
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: service_level_achievement
+        description: SLA achievement percentage
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: performance_tier
+        description: Location performance classification
+        tests:
+          - accepted_values:
+              values: ['excellent', 'good', 'fair', 'poor', 'critical']
+      - name: priority_level
+        description: Operations priority level
+        tests:
+          - accepted_values:
+              values: ['critical', 'high', 'medium', 'low']
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "active_devices <= total_devices"
+          tags: ['data_quality']
+
+  - name: mart_device_operations
+    description: >
+      Device-level operations mart for monitoring and maintenance planning.
+      Provides detailed device performance metrics and predictive maintenance insights.
+    columns:
+      - name: device_id
+        description: Primary device identifier
+        tests:
+          - unique
+          - not_null
+      - name: device_name
+        description: Device name/identifier
+        tests:
+          - not_null
+      - name: location_id
+        description: Associated location
+        tests:
+          - not_null
+      - name: operational_status
+        description: Current operational status
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['active', 'warning', 'critical', 'offline', 'maintenance']
+      - name: health_score
+        description: Overall device health score (0-100)
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: days_since_last_maintenance
+        description: Days since last maintenance
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: maintenance_due
+        description: Whether maintenance is due
+        tests:
+          - not_null
+      - name: predicted_failure_risk
+        description: Predictive failure risk score (0-100)
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100

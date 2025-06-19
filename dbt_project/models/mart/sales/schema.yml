@@ -1,0 +1,102 @@
+version: 2
+
+models:
+  # Sales Mart Models
+  - name: mart_sales__pipeline
+    description: >
+      Sales pipeline analytics mart providing opportunity tracking, pipeline velocity,
+      and revenue forecasting. Supports sales operations and executive reporting.
+    columns:
+      - name: opportunity_id
+        description: Unique opportunity identifier
+        tests:
+          - unique
+          - not_null
+      - name: opportunity_name
+        description: Opportunity name/description
+        tests:
+          - not_null
+      - name: account_id
+        description: Associated customer account
+        tests:
+          - not_null
+      - name: sales_rep_id
+        description: Assigned sales representative
+      - name: created_date
+        description: Opportunity creation date
+        tests:
+          - not_null
+      - name: expected_close_date
+        description: Expected close date
+        tests:
+          - not_null
+      - name: close_date
+        description: Actual close date (if closed)
+      - name: stage
+        description: Current sales stage
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['prospecting', 'qualification', 'proposal', 'negotiation', 'closed_won', 'closed_lost']
+      - name: opportunity_value
+        description: Total opportunity value
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: probability
+        description: Win probability percentage
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: weighted_value
+        description: Probability-weighted value
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: days_in_stage
+        description: Days in current stage
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: total_days_in_pipeline
+        description: Total days in pipeline
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: velocity_indicator
+        description: Pipeline velocity indicator
+        tests:
+          - accepted_values:
+              values: ['fast', 'normal', 'slow', 'stalled']
+      - name: deal_size_category
+        description: Deal size classification
+        tests:
+          - accepted_values:
+              values: ['enterprise', 'mid_market', 'small_business']
+      - name: competitor_involved
+        description: Whether competitors are involved
+        tests:
+          - not_null
+      - name: next_step
+        description: Next action in sales process
+      - name: forecast_category
+        description: Forecast categorization
+        tests:
+          - accepted_values:
+              values: ['commit', 'best_case', 'pipeline', 'omitted']
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "weighted_value <= opportunity_value"
+          tags: ['data_quality']
+      - dbt_utils.expression_is_true:
+          expression: "(stage = 'closed_won' AND probability = 100) OR (stage = 'closed_lost' AND probability = 0) OR stage NOT IN ('closed_won', 'closed_lost')"
+          tags: ['business_logic']
+      - dbt_utils.expression_is_true:
+          expression: "close_date IS NULL OR close_date >= created_date"
+          tags: ['data_quality']

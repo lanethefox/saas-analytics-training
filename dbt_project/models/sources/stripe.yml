@@ -1,0 +1,237 @@
+# Stripe Payment & Billing Data Sources
+# Updated to match actual loaded table schemas
+
+version: 2
+
+sources:
+  - name: stripe
+    description: "Stripe billing and payment data for subscription management"
+    database: saas_platform_dev
+    schema: raw
+    meta:
+      owner: "Finance & Data Engineering"
+      business_domain: "Billing & Revenue"
+    
+    tables:
+      # Core Billing Objects
+      - name: customers
+        identifier: stripe_customers
+        description: "Stripe customer records"
+        columns:
+          - name: id
+            description: "Stripe customer ID"
+            tests:
+              - unique
+              - not_null
+          - name: email
+            description: "Customer email address"
+          - name: name
+            description: "Customer name"
+          - name: created
+            description: "Unix timestamp of creation"
+          - name: metadata
+            description: "JSON field containing account_id mapping"
+
+      - name: subscriptions
+        identifier: stripe_subscriptions
+        description: "Active and historical subscriptions"
+        columns:
+          - name: id
+            description: "Stripe subscription ID"
+            tests:
+              - unique
+              - not_null
+          - name: customer
+            description: "Stripe customer ID"
+            tests:
+              - not_null
+              - relationships:
+                  to: source('stripe', 'customers')
+                  field: id
+          - name: status
+            description: "Subscription status"
+            tests:
+              - accepted_values:
+                  values: ['active', 'trialing', 'past_due', 'canceled', 'unpaid']
+          - name: current_period_start
+            description: "Unix timestamp of current period start"
+          - name: current_period_end
+            description: "Unix timestamp of current period end"
+          - name: created
+            description: "Unix timestamp of creation"
+          - name: cancel_at_period_end
+            description: "Whether subscription cancels at period end"
+          - name: metadata
+            description: "JSON field containing subscription metadata"
+
+      - name: subscription_items
+        identifier: stripe_subscription_items
+        description: "Line items for different feature tiers"
+        columns:
+          - name: id
+            description: "Subscription item ID"
+            tests:
+              - unique
+              - not_null
+          - name: subscription
+            description: "Subscription ID reference"
+            tests:
+              - not_null
+              - relationships:
+                  to: source('stripe', 'subscriptions')
+                  field: id
+          - name: price
+            description: "Price object with billing details"
+          - name: quantity
+            description: "Item quantity"
+          - name: created
+            description: "Unix timestamp of creation"
+
+      - name: invoices
+        identifier: stripe_invoices
+        description: "Billing cycle invoices"
+        columns:
+          - name: id
+            description: "Invoice ID"
+            tests:
+              - unique
+              - not_null
+          - name: customer
+            description: "Customer ID reference"
+            tests:
+              - not_null
+              - relationships:
+                  to: source('stripe', 'customers')
+                  field: id
+          - name: subscription
+            description: "Subscription ID reference"
+            tests:
+              - relationships:
+                  to: source('stripe', 'subscriptions')
+                  field: id
+          - name: amount_due
+            description: "Amount due in cents"
+          - name: amount_paid
+            description: "Amount paid in cents"
+          - name: status
+            description: "Invoice status"
+          - name: created
+            description: "Unix timestamp of creation"
+          - name: due_date
+            description: "Unix timestamp of due date"
+
+      - name: charges
+        identifier: stripe_charges
+        description: "Successful payment records"
+        columns:
+          - name: id
+            description: "Charge ID"
+            tests:
+              - unique
+              - not_null
+          - name: customer
+            description: "Customer ID reference"
+            tests:
+              - relationships:
+                  to: source('stripe', 'customers')
+                  field: id
+          - name: amount
+            description: "Amount in cents"
+          - name: currency
+            description: "Currency code"
+          - name: status
+            description: "Charge status"
+          - name: created
+            description: "Unix timestamp of creation"
+          - name: payment_method_details
+            description: "Payment method information"
+          - name: outcome
+            description: "Payment outcome"
+          - name: billing_details
+            description: "Billing information"
+          - name: metadata
+            description: "Custom metadata"
+
+      - name: payment_intents
+        identifier: stripe_payment_intents
+        description: "Payment processing attempts"
+        columns:
+          - name: id
+            description: "Payment intent ID"
+            tests:
+              - unique
+              - not_null
+          - name: customer
+            description: "Customer ID reference"
+            tests:
+              - relationships:
+                  to: source('stripe', 'customers')
+                  field: id
+          - name: amount
+            description: "Amount in cents"
+          - name: currency
+            description: "Currency code"
+          - name: status
+            description: "Payment status"
+          - name: created
+            description: "Unix timestamp of creation"
+
+      - name: events
+        identifier: stripe_events
+        description: "Complete audit log of all Stripe activities"
+        columns:
+          - name: id
+            description: "Event ID"
+            tests:
+              - unique
+              - not_null
+          - name: object
+            description: "Object type"
+          - name: type
+            description: "Event type"
+          - name: api_version
+            description: "API version"
+          - name: created
+            description: "Unix timestamp of creation"
+          - name: data
+            description: "Event data"
+          - name: previous_attributes
+            description: "Previous state"
+          - name: request__id
+            description: "Request ID"
+          - name: request__idempotency_key
+            description: "Idempotency key"
+          - name: pending_webhooks
+            description: "Webhook count"
+          - name: data__object__id
+            description: "Object ID"
+          - name: data__object__object
+            description: "Object type"
+          - name: data__object__status
+            description: "Object status"
+      
+      - name: prices
+        identifier: stripe_prices
+        description: "Product pricing configuration"
+        columns:
+          - name: id
+            description: "Price ID"
+            tests:
+              - unique
+              - not_null
+          - name: product
+            description: "Associated product ID"
+          - name: active
+            description: "Whether price is active"
+          - name: currency
+            description: "Price currency"
+          - name: unit_amount
+            description: "Price in cents"
+          - name: recurring__interval
+            description: "Billing interval (month, year)"
+          - name: recurring__interval_count
+            description: "Number of intervals"
+          - name: metadata
+            description: "Custom metadata"
+          - name: created
+            description: "Unix timestamp of creation"

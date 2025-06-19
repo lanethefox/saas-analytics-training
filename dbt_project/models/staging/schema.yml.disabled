@@ -1,0 +1,171 @@
+version: 2
+
+models:
+  # Marketing Staging Models
+  - name: stg_marketing__attribution_touchpoints
+    description: "Staging layer for multi-touch attribution tracking across all marketing channels"
+    columns:
+      - name: touchpoint_id
+        description: "Unique touchpoint identifier"
+        tests:
+          - unique
+          - not_null
+      - name: normalized_attribution_weight
+        description: "Normalized weight based on attribution model type"
+      - name: channel_group
+        description: "High-level channel grouping (Google, Meta, LinkedIn, etc.)"
+      - name: attribution_model_type
+        description: "Single Touch or Multi Touch attribution"
+        tests:
+          - accepted_values:
+              values: ['Single Touch', 'Multi Touch', 'Custom']
+
+  - name: stg_marketing__marketing_qualified_leads
+    description: "Staging layer for marketing qualified leads (MQLs) from all sources"
+    columns:
+      - name: lead_id
+        description: "Unique lead identifier"
+        tests:
+          - unique
+          - not_null
+      - name: email
+        description: "Normalized email address (lowercase, trimmed)"
+      - name: lead_temperature
+        description: "Lead score categorization"
+        tests:
+          - accepted_values:
+              values: ['Hot', 'Warm', 'Cool', 'Cold']
+      - name: lead_source_category
+        description: "Grouped lead source for reporting"
+
+  - name: stg_marketing__google_analytics_sessions
+    description: "Staging layer for website session data from Google Analytics"
+    columns:
+      - name: session_id
+        description: "Unique GA session identifier"
+        tests:
+          - unique
+          - not_null
+      - name: channel_grouping
+        description: "Standard channel groupings based on UTM parameters"
+      - name: engagement_level
+        description: "Session engagement categorization"
+      - name: session_quality_score
+        description: "Calculated quality score (0-100)"
+
+  - name: stg_marketing__facebook_ads_campaigns
+    description: "Staging layer for Facebook Ads campaign data"
+    columns:
+      - name: campaign_id
+        description: "Facebook campaign identifier"
+        tests:
+          - unique
+          - not_null
+      - name: objective_category
+        description: "Standardized campaign objective"
+      - name: budget_tier
+        description: "Campaign budget classification"
+
+  - name: stg_marketing__linkedin_ads_campaigns
+    description: "Staging layer for LinkedIn Ads campaign data"
+    columns:
+      - name: campaign_id
+        description: "LinkedIn campaign identifier"
+        tests:
+          - unique
+          - not_null
+      - name: campaign_format
+        description: "Type of LinkedIn ad format"
+      - name: target_segment
+        description: "B2B target segment (Enterprise, SMB, etc.)"
+
+  # HubSpot Staging Models
+  - name: stg_hubspot__engagements
+    description: "Staging layer for HubSpot sales engagement activities"
+    columns:
+      - name: engagement_id
+        description: "Unique engagement identifier"
+        tests:
+          - unique
+          - not_null
+      - name: engagement_category
+        description: "Type of engagement activity"
+        tests:
+          - accepted_values:
+              values: ['Email', 'Call', 'Meeting', 'Note', 'Task', 'Other']
+      - name: engagement_score
+        description: "Weighted score for sales activity reporting"
+
+  - name: stg_hubspot__owners
+    description: "Staging layer for HubSpot users/owners"
+    columns:
+      - name: owner_id
+        description: "Unique owner identifier"
+        tests:
+          - unique
+          - not_null
+      - name: email
+        description: "Owner email address (normalized)"
+      - name: owner_category
+        description: "Type of owner (Individual User, Team, Queue)"
+      - name: tenure_category
+        description: "Owner experience level based on tenure"
+
+  - name: stg_hubspot__tickets
+    description: "Staging layer for HubSpot support tickets"
+    columns:
+      - name: ticket_id
+        description: "Unique ticket identifier"
+        tests:
+          - unique
+          - not_null
+      - name: status_category
+        description: "Grouped ticket status"
+        tests:
+          - accepted_values:
+              values: ['Open', 'In Progress', 'Closed', 'Other']
+      - name: sla_status
+        description: "Whether ticket is within SLA based on priority"
+      - name: ticket_category
+        description: "Derived category based on subject analysis"
+
+  # Stripe Staging Models
+  - name: stg_stripe__prices
+    description: "Staging layer for Stripe product pricing configuration"
+    columns:
+      - name: price_id
+        description: "Unique price identifier"
+        tests:
+          - unique
+          - not_null
+      - name: product_id
+        description: "Associated Stripe product ID"
+      - name: billing_period
+        description: "Standardized billing period (Monthly, Annual, etc.)"
+      - name: annual_value
+        description: "Calculated annual value for the price"
+      - name: price_tier
+        description: "Price tier classification for segmentation"
+
+# Add tests for data quality across all staging models
+tests:
+  - name: test_staging_data_quality
+    description: "Ensure all staging models have valid data quality flags"
+    sql: |
+      select count(*) as invalid_records
+      from (
+        {% for model in ['stg_marketing__attribution_touchpoints', 
+                        'stg_marketing__marketing_qualified_leads',
+                        'stg_marketing__google_analytics_sessions',
+                        'stg_marketing__facebook_ads_campaigns',
+                        'stg_marketing__linkedin_ads_campaigns',
+                        'stg_hubspot__engagements',
+                        'stg_hubspot__owners',
+                        'stg_hubspot__tickets',
+                        'stg_stripe__prices'] %}
+        select '{{ model }}' as model_name, data_quality_flag
+        from {{ ref(model) }}
+        where data_quality_flag != 'Valid'
+        {% if not loop.last %}union all{% endif %}
+        {% endfor %}
+      ) as quality_issues

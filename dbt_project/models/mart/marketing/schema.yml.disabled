@@ -1,0 +1,99 @@
+version: 2
+
+models:
+  # Marketing Mart Models
+  - name: mart_marketing__attribution
+    description: >
+      Marketing attribution analysis mart providing multi-touch attribution insights
+      across all marketing channels. Includes ROI calculations, channel performance,
+      and conversion path analysis for marketing optimization.
+    columns:
+      - name: campaign_id
+        description: Unique campaign identifier
+        tests:
+          - not_null
+      - name: campaign_name
+        description: Campaign name
+        tests:
+          - not_null
+      - name: channel
+        description: Marketing channel
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['google_ads', 'facebook', 'linkedin', 'email', 'organic', 'direct', 'referral']
+      - name: platform
+        description: Specific marketing platform
+        tests:
+          - not_null
+      - name: attribution_model
+        description: Attribution model used
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['first_touch', 'last_touch', 'linear', 'time_decay', 'position_based']
+      - name: total_spend
+        description: Total campaign spend
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: impressions
+        description: Total impressions
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: clicks
+        description: Total clicks
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: conversions
+        description: Total conversions attributed
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: attributed_revenue
+        description: Revenue attributed to campaign
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: roi
+        description: Return on investment percentage
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: -100
+      - name: cost_per_conversion
+        description: Average cost per conversion
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: conversion_rate
+        description: Conversion rate percentage
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: click_through_rate
+        description: CTR percentage
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: performance_tier
+        description: Campaign performance classification
+        tests:
+          - accepted_values:
+              values: ['top', 'high', 'medium', 'low', 'poor']
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "clicks <= impressions"
+          tags: ['data_quality']
+      - dbt_utils.expression_is_true:
+          expression: "conversions <= clicks OR conversions = 0"
+          tags: ['data_quality']

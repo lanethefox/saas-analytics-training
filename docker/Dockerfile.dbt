@@ -1,0 +1,32 @@
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    build-essential \
+    libpq-dev \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install modern dbt
+RUN pip install --upgrade pip && \
+    pip install \
+    dbt-core==1.8.0 \
+    dbt-postgres==1.8.0 \
+    psycopg2-binary \
+    sqlfluff \
+    pre-commit
+
+# Set working directory
+WORKDIR /opt/dbt
+
+# Copy profiles template
+COPY docker/profiles/profiles.yml /opt/dbt/profiles.yml
+
+# Set environment variable to disable file logging
+ENV DBT_ENABLE_LEGACY_LOGGER=true
+ENV DBT_LOG_FORMAT=json
+
+# Default command
+CMD ["bash"]

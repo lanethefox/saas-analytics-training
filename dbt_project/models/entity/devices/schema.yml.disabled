@@ -1,0 +1,209 @@
+version: 2
+
+models:
+  - name: entity_devices
+    description: |
+      Atomic device entity table providing current-state view with real-time health metrics
+      and operational insights. This table serves as the primary source for device fleet
+      management, operational monitoring, and maintenance scheduling.
+      
+      Key Features:
+      - Real-time device health scoring (uptime, performance, alerts)
+      - 30-day operational and performance metrics
+      - Predictive maintenance indicators
+      - Environmental monitoring (temperature, pressure)
+      - Revenue impact estimation
+    
+    columns:
+      - name: device_id
+        description: Unique identifier for the device
+        tests:
+          - not_null
+          - unique
+      
+      - name: device_key
+        description: Surrogate key for the device
+        tests:
+          - not_null
+          - unique
+      
+      - name: location_id
+        description: ID of the location where device is installed
+        tests:
+          - not_null
+      
+      - name: account_id
+        description: Account (customer) who owns the location
+      
+      - name: device_type
+        description: Type of device (tap_controller, sensor, gateway)
+        tests:
+          - not_null
+      
+      - name: overall_health_score
+        description: Composite health score (0-1) based on uptime, performance, and alerts
+        tests:
+          - not_null
+      
+      - name: operational_status
+        description: Current operational state (operational, maintenance, non_operational, error)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['operational', 'maintenance', 'non_operational', 'error', 'unknown']
+      
+      - name: uptime_percentage_30d
+        description: Percentage of days device was active in last 30 days
+        tests:
+          - not_null
+      
+      - name: performance_tier
+        description: Performance categorization (excellent, good, fair, poor, inactive)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['excellent', 'good', 'fair', 'poor', 'inactive']
+      
+      - name: maintenance_risk_level
+        description: Risk level for maintenance needs (minimal, low, medium, high)
+        tests:
+          - accepted_values:
+              values: ['minimal', 'low', 'medium', 'high']
+      
+      - name: requires_immediate_attention
+        description: Flag indicating device needs urgent intervention
+        tests:
+          - not_null
+
+  - name: entity_devices_history
+    description: |
+      Complete device lifecycle history tracking all state changes, events, and performance
+      evolution. Essential for predictive maintenance modeling, reliability analysis,
+      warranty tracking, and failure pattern recognition.
+      
+      Key Features:
+      - Complete audit trail of device events
+      - Performance impact tracking over time
+      - Failure categorization and MTBF calculations
+      - Maintenance history with intervals
+      - Anomaly pattern detection
+    
+    columns:
+      - name: history_id
+        description: Unique identifier for each history record
+        tests:
+          - not_null
+          - unique
+      
+      - name: device_id
+        description: Device this history record belongs to
+        tests:
+          - not_null
+      
+      - name: valid_from
+        description: Start timestamp for when this state was valid
+        tests:
+          - not_null
+      
+      - name: valid_to
+        description: End timestamp for when this state was valid
+        tests:
+          - not_null
+      
+      - name: event_type
+        description: Type of event that occurred
+        tests:
+          - not_null
+      
+      - name: event_category
+        description: Category of the event (Pour, Error, Maintenance, etc.)
+        tests:
+          - not_null
+      
+      - name: performance_impact
+        description: Impact of this event on device performance (-1 to 1)
+      
+      - name: cumulative_performance_impact
+        description: Running total of performance impacts
+        tests:
+          - not_null
+      
+      - name: mtbf_hours
+        description: Mean time between failures in hours
+      
+      - name: is_current
+        description: Whether this is the current/latest record
+        tests:
+          - not_null
+
+  - name: entity_devices_hourly
+    description: |
+      Hourly aggregated device performance metrics optimized for operational dashboards,
+      SLA monitoring, capacity planning, and real-time alerting. Provides granular
+      insights into device behavior patterns and performance trends.
+      
+      Key Features:
+      - Hourly event aggregations by type
+      - Environmental condition monitoring
+      - Performance scoring and SLA tracking
+      - 24-hour moving averages
+      - Business period analysis
+    
+    columns:
+      - name: device_id
+        description: Device identifier
+        tests:
+          - not_null
+      
+      - name: hour_timestamp
+        description: Hour timestamp for this aggregation
+        tests:
+          - not_null
+      
+      - name: total_events
+        description: Total events in this hour
+        tests:
+          - not_null
+      
+      - name: success_rate
+        description: Rate of successful events (0-1)
+        tests:
+          - not_null
+      
+      - name: error_rate
+        description: Rate of error events (0-1)
+        tests:
+          - not_null
+      
+      - name: anomaly_rate
+        description: Rate of anomalous events (0-1)
+        tests:
+          - not_null
+      
+      - name: hourly_performance_score
+        description: Performance score for this hour (0-1)
+        tests:
+          - not_null
+      
+      - name: performance_tier
+        description: Performance tier for the hour
+        tests:
+          - accepted_values:
+              values: ['excellent', 'good', 'fair', 'poor']
+      
+      - name: alert_level
+        description: Alert level based on error and anomaly rates
+        tests:
+          - accepted_values:
+              values: ['normal', 'warning', 'critical']
+      
+      - name: meets_sla
+        description: Whether device met SLA requirements this hour
+        tests:
+          - not_null
+    
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - device_id
+            - hour_timestamp

@@ -1,0 +1,543 @@
+version: 2
+
+models:
+  # Campaigns Entity Models
+  - name: int_campaigns__core
+    description: >
+      Unified campaign view combining data from multiple marketing platforms 
+      (Google Ads, Facebook, LinkedIn, Iterable). Provides standardized campaign 
+      metrics and performance indicators across all channels.
+    columns:
+      - name: campaign_key
+        description: Unique surrogate key for the unified campaign record
+        tests:
+          - unique
+          - not_null
+      - name: campaign_id
+        description: Original campaign identifier from the source platform
+        tests:
+          - not_null
+      - name: campaign_source
+        description: Marketing platform source
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['google_ads', 'facebook', 'linkedin', 'iterable', 'meta', 'email']
+      - name: total_spend
+        description: Total campaign spend
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: impressions
+        description: Total impressions
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: clicks
+        description: Total clicks
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: conversions
+        description: Total conversions
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: performance_tier
+        description: Campaign performance classification based on conversion metrics
+        tests:
+          - accepted_values:
+              values: ['top', 'high', 'medium', 'low', 'poor']
+      - name: roi_percentage
+        description: Return on investment percentage calculated from spend and conversion value
+
+  - name: int_campaigns__attribution
+    description: >
+      Multi-touch attribution modeling linking marketing touchpoints to conversions.
+      Implements various attribution models (first-touch, last-touch, linear, 
+      time-decay, position-based) for comprehensive campaign analysis.
+    columns:
+      - name: campaign_id
+        description: Campaign identifier matching int_campaigns__core
+        tests:
+          - not_null
+      - name: attribution_credit
+        description: Attribution credit (0-1)
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1
+      - name: touchpoint_rank
+        description: Touchpoint position in customer journey
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+      - name: attributed_revenue
+        description: Revenue attributed to this touchpoint
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+
+  # Customers Entity Models  
+  - name: int_customers__core
+    description: >
+      Core customer information combining account data with subscription and 
+      billing information. Provides foundation for customer 360 view with 
+      calculated health scores and lifecycle stages.
+    columns:
+      - name: account_id
+        description: Primary account identifier
+        tests:
+          - unique
+          - not_null
+      - name: company_name
+        description: Customer company name
+        tests:
+          - not_null
+      - name: created_at
+        description: Account creation timestamp
+        tests:
+          - not_null
+      - name: is_active
+        description: Active account flag
+        tests:
+          - not_null
+      - name: subscription_health_score
+        description: Score (0-1) based on subscription status and revenue
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1
+      - name: customer_lifecycle_stage
+        description: Current stage in customer journey
+        tests:
+          - accepted_values:
+              values: ['trial', 'new', 'active', 'at_risk', 'inactive', 'churned']
+      - name: annual_recurring_revenue
+        description: Calculated ARR based on monthly recurring revenue
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+
+  # Devices Entity Models
+  - name: int_devices__performance_health
+    description: >
+      Device performance metrics and health indicators. Aggregates device 
+      telemetry data with operational status for comprehensive device monitoring.
+    columns:
+      - name: device_id
+        description: Primary device identifier
+        tests:
+          - unique
+          - not_null
+      - name: location_id
+        description: Associated location
+        tests:
+          - not_null
+      - name: device_type
+        description: Type of device
+        tests:
+          - not_null
+      - name: uptime_percentage
+        description: Device uptime percentage
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: error_rate
+        description: Error rate percentage
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: health_score
+        description: Calculated health score based on performance metrics
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: operational_status
+        description: Current operational state of the device
+        tests:
+          - accepted_values:
+              values: ['active', 'warning', 'critical', 'offline', 'maintenance']
+
+  # Features Entity Models
+  - name: int_features__core
+    description: >
+      Feature usage analytics showing adoption rates and engagement metrics 
+      across the platform. Tracks feature popularity and usage patterns.
+    columns:
+      - name: feature_key
+        description: Unique surrogate key for the feature
+        tests:
+          - unique
+          - not_null
+      - name: feature_name
+        description: Name of the feature
+        tests:
+          - not_null
+          - unique
+      - name: feature_category
+        description: Feature categorization
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['core', 'advanced', 'enterprise', 'beta', 'deprecated']
+      - name: release_date
+        description: Feature release date
+        tests:
+          - not_null
+      - name: is_active
+        description: Whether feature is currently active
+        tests:
+          - not_null
+
+  - name: int_features__adoption_patterns
+    description: >
+      Feature adoption journey analysis by customer segment. Tracks how features 
+      are adopted across different customer types and correlates with customer value.
+    columns:
+      - name: feature_name
+        description: Name of the feature being analyzed
+        tests:
+          - not_null
+      - name: adoption_rate
+        description: Overall adoption rate percentage
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: monthly_active_users
+        description: Count of monthly active users
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: feature_value_score
+        description: Score (0-100) indicating feature value
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: strategic_importance
+        description: Classification of feature importance
+        tests:
+          - accepted_values:
+              values: ['critical', 'important', 'valuable', 'experimental', 'low']
+
+  # Locations Entity Models
+  - name: int_locations__core
+    description: >
+      Core location information with operational metrics. Combines location 
+      master data with device counts and activity indicators.
+    columns:
+      - name: location_id
+        description: Primary location identifier
+        tests:
+          - unique
+          - not_null
+      - name: account_id
+        description: Associated customer account
+        tests:
+          - not_null
+      - name: location_name
+        description: Name of the location
+        tests:
+          - not_null
+      - name: created_at
+        description: Location creation timestamp
+        tests:
+          - not_null
+      - name: is_active
+        description: Whether location is active
+        tests:
+          - not_null
+      - name: location_status
+        description: Current operational status of the location
+        tests:
+          - accepted_values:
+              values: ['active', 'inactive', 'maintenance', 'closed']
+
+  - name: int_locations__operational_metrics
+    description: >
+      Detailed operational performance metrics for locations including device 
+      health, utilization rates, and activity patterns.
+    columns:
+      - name: location_id
+        description: Primary location identifier
+        tests:
+          - not_null
+      - name: device_count
+        description: Total device count at location
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: active_device_percentage
+        description: Percentage of active devices
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: avg_device_health
+        description: Average health score across all devices
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: operational_efficiency
+        description: Operational efficiency percentage
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: operational_health_score
+        description: Composite score based on multiple operational factors
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: performance_tier
+        description: Location performance classification
+        tests:
+          - accepted_values:
+              values: ['excellent', 'good', 'fair', 'poor', 'critical']
+
+  # Subscriptions Entity Models
+  - name: int_subscriptions__core
+    description: >
+      Reconciled subscription data combining app database and Stripe information.
+      Provides unified view with accurate MRR/ARR calculations and subscription status.
+    columns:
+      - name: subscription_key
+        description: Unique surrogate key for the subscription
+        tests:
+          - unique
+          - not_null
+      - name: subscription_id
+        description: Primary subscription identifier
+        tests:
+          - not_null
+          - unique
+      - name: account_id
+        description: Associated customer account
+        tests:
+          - not_null
+      - name: plan_name
+        description: Subscription plan name
+        tests:
+          - not_null
+      - name: start_date
+        description: Subscription start date
+        tests:
+          - not_null
+      - name: status
+        description: Current subscription status
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['active', 'cancelled', 'trial', 'past_due', 'paused']
+      - name: monthly_recurring_revenue
+        description: Calculated MRR from subscription items
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: subscription_health_status
+        description: Health classification
+        tests:
+          - accepted_values:
+              values: ['healthy', 'trial', 'at_risk', 'churned']
+      - name: data_source
+        description: Indicates data reconciliation source
+        tests:
+          - accepted_values:
+              values: ['app_only', 'stripe_only', 'both']
+
+  - name: int_subscriptions__revenue_metrics
+    description: >
+      Advanced revenue analytics including payment health, lifetime value 
+      calculations, and churn risk assessment based on payment history.
+    columns:
+      - name: subscription_id
+        description: Primary subscription identifier
+        tests:
+          - not_null
+      - name: monthly_recurring_revenue
+        description: Current MRR
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: annual_recurring_revenue
+        description: Calculated ARR
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: lifetime_value
+        description: Total amount paid over subscription lifetime
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: payment_health_score
+        description: Score (0-100) based on payment success
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: churn_risk_score
+        description: Risk score (0-100, higher = more risk)
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: churn_probability
+        description: Probability of churn (0-1)
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1
+
+  # Users Entity Models
+  - name: int_users__core
+    description: >
+      Core user information with activity metrics. Combines user profiles with 
+      session data, feature usage, and page view analytics for comprehensive 
+      user behavior analysis.
+    columns:
+      - name: user_id
+        description: Primary user identifier
+        tests:
+          - unique
+          - not_null
+      - name: account_id
+        description: Associated customer account
+        tests:
+          - not_null
+      - name: email
+        description: User email address
+        tests:
+          - not_null
+      - name: role
+        description: User role
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['admin', 'manager', 'operator', 'viewer', 'api_user']
+      - name: created_at
+        description: User creation timestamp
+        tests:
+          - not_null
+      - name: is_active
+        description: Whether user is active
+        tests:
+          - not_null
+      - name: engagement_score_30d
+        description: Engagement score (0-1) based on 30-day activity
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1
+      - name: activity_level_30d
+        description: Activity classification
+        tests:
+          - accepted_values:
+              values: ['highly_active', 'moderately_active', 'occasionally_active', 'rarely_active', 'inactive']
+      - name: feature_adoption_level
+        description: User classification based on feature usage breadth
+        tests:
+          - accepted_values:
+              values: ['power_user', 'regular_user', 'occasional_user', 'new_user']
+
+  - name: int_users__engagement_metrics
+    description: >
+      Detailed user engagement analytics including session patterns, feature 
+      interactions, and behavioral segmentation.
+    columns:
+      - name: user_id
+        description: Primary user identifier
+        tests:
+          - not_null
+      - name: engagement_score
+        description: Overall engagement score
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: days_since_last_login
+        description: Days since last activity
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: total_sessions
+        description: Total session count
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: feature_adoption_rate
+        description: Percentage of features adopted
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: engagement_trend
+        description: Trending direction of user engagement
+        tests:
+          - accepted_values:
+              values: ['increasing', 'stable', 'decreasing', 'new', 'reactivated']
+      - name: behavioral_segment
+        description: User segment based on engagement patterns
+        tests:
+          - accepted_values:
+              values: ['champion', 'loyal', 'potential', 'at_risk', 'hibernating', 'lost']
+
+# Cross-model tests
+models:
+  - name: int_customers__core
+    tests:
+      - dbt_utils.equal_rowcount:
+          compare_model: ref('stg_app_database__accounts')
+          tags: ['data_quality']
+    
+  - name: int_subscriptions__core
+    tests:
+      - dbt_utils.recency:
+          datepart: day
+          field: _int_updated_at
+          interval: 1
+          tags: ['freshness']
+      
+  - name: int_users__core
+    tests:
+      - dbt_utils.relationships_where:
+          to: ref('int_customers__core')
+          field: account_id
+          to_field: account_id
+          where: "is_active = TRUE"
+          tags: ['referential_integrity']

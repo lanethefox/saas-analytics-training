@@ -1,0 +1,44 @@
+ total_customers | customers_no_subs | customers_with_subs | mrr_mismatch_count 
+-----------------+-------------------+---------------------+--------------------
+             100 |               100 |                   0 |                  0
+(1 row)
+
+ account_id |                    company_name                    | customer_tier | customer_mrr | sub_count | sub_statuses | total_sub_mrr 
+------------+----------------------------------------------------+---------------+--------------+-----------+--------------+---------------
+ 0          | Sports Rodriguez, Figueroa and Sanchez Tavern      |             4 |            0 |         0 |              |              
+ 1          | Irish Santos, Gardner and Robinson Pub             |             4 |            0 |         0 |              |              
+ 10         | Grape Aguirre-Lee Vintners                         |             4 |            0 |         0 |              |              
+ 11         | View Ford-Baxter Rooftop                           |             4 |            0 |         0 |              |              
+ 12         | Stadium Baker-Bowers Grill                         |             4 |            0 |         0 |              |              
+ 13         | Heights Yu Heights                                 |             4 |            0 |         0 |              |              
+ 14         | Craft Santiago Cocktails                           |             4 |            0 |         0 |              |              
+ 15         | Craft Ibarra-Suarez Beer Co                        |             4 |            0 |         0 |              |              
+ 16         | Villa Jacobs-Robbins Bistro                        |             4 |            0 |         0 |              |              
+ 17         | Rooftop Jones Ltd Sky Bar                          |             4 |            0 |         0 |              |              
+ 18         | Smoke Garcia, Deleon and Henson Kitchen            |             4 |            0 |         0 |              |              
+ 19         | Local Garrison and Sons Saloon                     |             4 |            0 |         0 |              |              
+ 2          | Corner Blair PLC Tavern                            |             4 |            0 |         0 |              |              
+ 20         | Grill Zavala, Herrera and Crosby Kitchen           |             4 |            0 |         0 |              |              
+ 21         | Classic Meyer PLC Bar                              |             4 |            0 |         0 |              |              
+ 22         | Smoke Bentley, Byrd and Orr BBQ                    |             4 |            0 |         0 |              |              
+ 23         | Champions Miller, Robertson and Schultz Sports Bar |             4 |            0 |         0 |              |              
+ 24         | Vintage Johnston, Higgins and Cruz Cellars         |             4 |            0 |         0 |              |              
+ 25         | Barrel Briggs, Mcclain and Simmons Brewery         |             4 |            0 |         0 |              |              
+ 26         | Local Hall Ltd Tavern                              |             4 |            0 |         0 |              |              
+(20 rows)
+
+ subscription_status | count |      min_mrr       | max_mrr |        avg_mrr         |       total_mrr       
+---------------------+-------+--------------------+---------+------------------------+-----------------------
+ canceled            |   132 |                  0 |       0 | 0.00000000000000000000 |                     0
+ Active              |   130 | 4.1658333333333333 |  399.99 |    69.7704358974358974 | 9070.1566666666666652
+ active              |    68 |                  0 |       0 | 0.00000000000000000000 |                     0
+ Cancelled           |    39 | 4.1658333333333333 |  399.99 |   124.3522649572649573 | 4849.7383333333333331
+ Other               |    37 | 4.1658333333333333 |  399.99 |    86.7071621621621622 | 3208.1649999999999996
+ Trial               |    35 | 4.1658333333333333 |  399.99 |   146.8984285714285714 | 5141.4449999999999997
+(6 rows)
+
+ table_schema |     table_name      
+--------------+---------------------
+ intermediate | int_customers__core
+(1 row)
+

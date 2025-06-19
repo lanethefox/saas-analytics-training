@@ -1,0 +1,39 @@
+  entity_type  | record_count 
+---------------+--------------
+ Devices       |         1205
+ Subscriptions |          441
+ Users         |          337
+ Campaigns     |          310
+ Locations     |          241
+ Customers     |          100
+ Features      |           10
+(7 rows)
+
+       metric        |          value           
+---------------------+--------------------------
+ Total Customers     | 100
+ Unique Account IDs  | 100
+ Null Account IDs    | 0
+ Null Company Names  | 0
+ Null MRR Values     | 0
+ Zero MRR Values     | 100
+ Negative MRR Values | 0
+ Date Range          | 2025-06-17 to 2025-06-17
+ MRR Range           | $0 to $0
+ Average MRR         | $0.00
+ MRR Std Dev         | $0.00
+(11 rows)
+
+ operational_status | device_count | avg_health_score | avg_uptime_pct | earliest_install | latest_install 
+--------------------+--------------+------------------+----------------+------------------+----------------
+ operational        |          901 |             0.25 |           0.01 | 2020-08-31       | 2025-08-25
+ non_operational    |          304 |             0.25 |           0.01 | 2020-09-04       | 2025-08-21
+(2 rows)
+
+ role_type_standardized | user_count | percentage | avg_engagement 
+------------------------+------------+------------+----------------
+ Standard               |        136 |      40.36 |           0.34
+ Manager                |        134 |      39.76 |           0.32
+ Admin                  |         67 |      19.88 |           0.36
+(3 rows)
+

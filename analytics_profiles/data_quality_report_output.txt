@@ -1,0 +1,42 @@
+    table_name    | total_records | unique_accounts | account_id_completeness | company_name_completeness | mrr_completeness | earliest_record | latest_record 
+------------------+---------------+-----------------+-------------------------+---------------------------+------------------+-----------------+---------------
+ entity_customers |           100 |             100 |                  100.00 |                    100.00 |           100.00 | 2025-06-17      | 2025-06-17
+(1 row)
+
+   table_name   | total_records | unique_devices | device_id_completeness | location_id_completeness | health_score_completeness | earliest_record | latest_record 
+----------------+---------------+----------------+------------------------+--------------------------+---------------------------+-----------------+---------------
+ entity_devices |          1205 |           1205 |                 100.00 |                   100.00 |                    100.00 | 2020-08-31      | 2025-08-25
+(1 row)
+
+           metric           | value 
+----------------------------+-------
+ Total Customers            | 100
+ Active Customers           | 100
+ Total MRR                  | $.00
+ Average MRR per Customer   | $.00
+ Median MRR                 | $.00
+ Max MRR (Largest Customer) | $.00
+ Total ARR                  | $.00
+(7 rows)
+
+ customer_tier | customer_count | percentage | tier_mrr | avg_mrr_per_customer 
+---------------+----------------+------------+----------+----------------------
+             4 |            100 |     100.00 |        0 |                 0.00
+(1 row)
+
+ health_category | device_count | percentage | avg_uptime_pct 
+-----------------+--------------+------------+----------------
+(0 rows)
+
+           issue_type           | issue_count 
+--------------------------------+-------------
+ Active customers with zero MRR |         100
+(1 row)
+
+      history_table       | total_records | earliest_date | latest_date | unique_entities 
+--------------------------+---------------+---------------+-------------+-----------------
+ entity_customers_history |           100 | 2025-06-17    |             |             100
+ entity_devices_history   |          3604 | 2020-12-02    | 9999-12-31  |            1205
+ entity_users_history     |           337 | 2025-06-18    |             |             337
+(3 rows)
+

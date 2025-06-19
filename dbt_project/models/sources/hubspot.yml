@@ -1,0 +1,176 @@
+# HubSpot CRM & Marketing Data Sources
+# Updated to match actual loaded table schemas
+
+version: 2
+
+sources:
+  - name: hubspot
+    description: "HubSpot CRM and marketing automation data"
+    database: saas_platform_dev
+    schema: raw
+    meta:
+      owner: "Sales & Marketing"
+      business_domain: "Customer Relationship Management"
+    
+    tables:
+      # Lead Management
+      - name: companies
+        identifier: hubspot_companies
+        description: "Business entity records"
+        columns:
+          - name: company_id
+            description: "HubSpot company ID"
+            tests:
+              - unique
+              - not_null
+          - name: name
+            description: "Company name"
+          - name: domain
+            description: "Company domain"
+          - name: industry
+            description: "Industry classification"
+          - name: created_at
+            description: "Company creation timestamp"
+
+      - name: contacts
+        identifier: hubspot_contacts
+        description: "Individual prospect and customer contacts"
+        columns:
+          - name: contact_id
+            description: "HubSpot contact ID"
+            tests:
+              - unique
+              - not_null
+          - name: email
+            description: "Contact email address"
+          - name: first_name
+            description: "Contact first name"
+          - name: last_name
+            description: "Contact last name"
+          - name: company_id
+            description: "Associated company ID"
+            tests:
+              - relationships:
+                  to: source('hubspot', 'companies')
+                  field: company_id
+          - name: created_at
+            description: "Contact creation timestamp"
+
+      - name: deals
+        identifier: hubspot_deals
+        description: "Sales pipeline opportunities"
+        columns:
+          - name: deal_id
+            description: "HubSpot deal ID"
+            tests:
+              - unique
+              - not_null
+          - name: deal_name
+            description: "Deal name"
+          - name: amount
+            description: "Deal value"
+          - name: stage
+            description: "Deal stage"
+          - name: contact_id
+            description: "Associated contact ID"
+            tests:
+              - relationships:
+                  to: source('hubspot', 'contacts')
+                  field: contact_id
+          - name: created_at
+            description: "Deal creation timestamp"
+
+      - name: engagements
+        identifier: hubspot_engagements
+        description: "Interaction history (calls, emails, meetings)"
+        columns:
+          - name: engagement_id
+            description: "HubSpot engagement ID"
+            tests:
+              - unique
+              - not_null
+          - name: contact_id
+            description: "Associated contact ID"
+            tests:
+              - relationships:
+                  to: source('hubspot', 'contacts')
+                  field: contact_id
+          - name: engagement_type
+            description: "Type of engagement (call, email, meeting, etc.)"
+          - name: timestamp
+            description: "Engagement timestamp"
+
+      # Email Marketing
+      - name: email_events
+        identifier: email_events
+        description: "Email engagement tracking"
+        columns:
+          - name: event_id
+            description: "Email event ID"
+            tests:
+              - unique
+              - not_null
+          - name: contact_id
+            description: "Associated contact ID"
+            tests:
+              - relationships:
+                  to: source('hubspot', 'contacts')
+                  field: contact_id
+          - name: event_type
+            description: "Event type (sent, delivered, opened, etc.)"
+          - name: timestamp
+            description: "Event timestamp"
+      
+      # User Management
+      - name: owners
+        identifier: hubspot_owners
+        description: "HubSpot users/owners for assignment tracking"
+        columns:
+          - name: owner_id
+            description: "HubSpot owner ID"
+            tests:
+              - unique
+              - not_null
+          - name: email
+            description: "Owner email address"
+          - name: first_name
+            description: "Owner first name"
+          - name: last_name
+            description: "Owner last name"
+          - name: type
+            description: "Owner type (user, team, etc.)"
+          - name: created_at
+            description: "Owner creation timestamp"
+      
+      # Support Tickets
+      - name: tickets
+        identifier: hubspot_tickets
+        description: "Customer support tickets"
+        columns:
+          - name: ticket_id
+            description: "HubSpot ticket ID"
+            tests:
+              - unique
+              - not_null
+          - name: subject
+            description: "Ticket subject"
+          - name: status
+            description: "Ticket status"
+          - name: priority
+            description: "Ticket priority"
+          - name: contact_id
+            description: "Associated contact ID"
+            tests:
+              - relationships:
+                  to: source('hubspot', 'contacts')
+                  field: contact_id
+          - name: owner_id
+            description: "Assigned owner ID"
+            tests:
+              - relationships:
+                  to: source('hubspot', 'owners')
+                  field: owner_id
+          - name: created_at
+            description: "Ticket creation timestamp"
+          - name: closed_at
+            description: "Ticket closure timestamp"

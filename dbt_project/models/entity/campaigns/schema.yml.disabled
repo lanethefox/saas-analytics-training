@@ -1,0 +1,132 @@
+version: 2
+
+models:
+  - name: entity_campaigns
+    description: |
+      Entity-Centric Model: Campaigns (Atomic/Current State)
+      
+      This table provides a comprehensive view of current campaign performance with spend,
+      conversion rates, and multi-touch attribution metrics. It serves as the primary source
+      for marketing optimization, budget allocation, campaign management, and ROI analysis.
+      
+      Key Features:
+      - Multi-platform campaign unification (Google, Facebook, LinkedIn, Iterable)
+      - Performance metrics with CTR, CVR, CPA, and ROI calculations
+      - Multi-touch attribution modeling (first, last, linear, time-decay, position-based)
+      - Performance scoring and optimization recommendations
+      - Campaign lifecycle and health tracking
+    
+    columns:
+      - name: campaign_id
+        description: Unique identifier for the campaign
+        tests:
+          - not_null
+          - unique
+      
+      - name: campaign_key
+        description: Surrogate key for the campaign
+        tests:
+          - not_null
+      
+      - name: platform
+        description: Marketing platform (google_ads, facebook, linkedin, iterable)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['google_ads', 'facebook', 'linkedin', 'iterable']
+      
+      - name: performance_tier
+        description: Performance classification based on conversion metrics
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['high_performing', 'good_performing', 'average_performing', 'under_performing']
+      
+      - name: performance_score
+        description: Composite performance score (0-100)
+        tests:
+          - not_null
+
+  - name: entity_campaigns_history
+    description: |
+      Entity-Centric Model: Campaigns (Change History)
+      
+      This table tracks campaign evolution including budget changes, creative updates, and
+      performance shifts over time. It enables marketing mix modeling, attribution algorithm
+      development, campaign optimization, and A/B test analysis.
+      
+      Key Features:
+      - Performance change tracking over time
+      - Budget and spend evolution
+      - Attribution pattern changes
+      - Optimization recommendation history
+      - Temporal validity for historical analysis
+    
+    columns:
+      - name: campaign_history_id
+        description: Unique identifier for each history record
+        tests:
+          - not_null
+          - unique
+      
+      - name: campaign_id
+        description: Campaign identifier
+        tests:
+          - not_null
+      
+      - name: change_type
+        description: Type of change recorded
+        tests:
+          - not_null
+      
+      - name: valid_from
+        description: Timestamp when this record became valid
+        tests:
+          - not_null
+      
+      - name: is_current
+        description: Flag indicating if this is the current record
+        tests:
+          - not_null
+
+  - name: entity_campaigns_daily
+    description: |
+      Entity-Centric Model: Campaigns (Daily Strategic Grain)
+      
+      This table provides daily campaign performance aggregations for marketing optimization
+      and tactical decision-making. It supports daily marketing operations, budget pacing,
+      performance trending, and anomaly detection.
+      
+      Key Features:
+      - Daily performance metrics and spend tracking
+      - Budget pacing and cumulative metrics
+      - Day-of-week pattern analysis
+      - Performance trending and anomaly detection
+      - Attribution metrics at daily grain
+    
+    columns:
+      - name: campaign_id
+        description: Campaign identifier
+        tests:
+          - not_null
+      
+      - name: performance_date
+        description: Date of performance metrics
+        tests:
+          - not_null
+      
+      - name: daily_spend
+        description: Spend amount for this day
+        tests:
+          - not_null
+      
+      - name: platform
+        description: Marketing platform
+        tests:
+          - not_null
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - campaign_id
+            - performance_date

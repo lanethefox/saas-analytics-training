@@ -1,0 +1,230 @@
+# Sources Layer - Raw API Data and Application Tables
+# Updated to match actual loaded table schemas
+
+version: 2
+
+sources:
+  # Core Application Database (PostgreSQL)
+  - name: app_database
+    description: "Core application database with operational data"
+    database: saas_platform_dev
+    schema: raw
+    meta:
+      owner: "Product & Engineering"
+      business_domain: "Core Operations"
+    
+    tables:
+      # Customer & Account Management
+      - name: accounts
+        identifier: app_database_accounts
+        description: "Customer account records (companies/organizations)"
+        columns:
+          - name: account_id
+            description: "Unique account identifier"
+            tests:
+              - unique
+              - not_null
+          - name: account_name
+            description: "Customer account name"
+          - name: account_type
+            description: "Type of account (Business, Professional, Enterprise)"
+          - name: created_at
+            description: "Account creation timestamp"
+
+      - name: users
+        identifier: app_database_users
+        description: "Individual user profiles with role-based access"
+        columns:
+          - name: user_id
+            description: "Unique user identifier"
+            tests:
+              - unique
+              - not_null
+          - name: account_id
+            description: "Foreign key to accounts"
+            tests:
+              - not_null
+              - relationships:
+                  to: source('app_database', 'accounts')
+                  field: account_id
+          - name: email
+            description: "User email address"
+          - name: first_name
+            description: "User first name"
+          - name: last_name
+            description: "User last name"
+          - name: created_at
+            description: "User registration timestamp"
+
+      - name: locations
+        identifier: app_database_locations
+        description: "Individual bar/restaurant locations within accounts"
+        columns:
+          - name: location_id
+            description: "Unique location identifier"
+            tests:
+              - unique
+              - not_null
+          - name: account_id
+            description: "Foreign key to accounts"
+            tests:
+              - not_null
+              - relationships:
+                  to: source('app_database', 'accounts')
+                  field: account_id
+          - name: location_name
+            description: "Location display name"
+          - name: address
+            description: "Physical address"
+          - name: city
+            description: "City name"
+          - name: state
+            description: "State/province"
+          - name: country
+            description: "Country code"
+          - name: created_at
+            description: "Location creation timestamp"
+
+      - name: devices
+        identifier: app_database_devices
+        description: "Physical IoT devices per location"
+        columns:
+          - name: device_id
+            description: "Unique device identifier"
+            tests:
+              - unique
+              - not_null
+          - name: location_id
+            description: "Foreign key to locations"
+            tests:
+              - not_null
+              - relationships:
+                  to: source('app_database', 'locations')
+                  field: location_id
+          - name: device_name
+            description: "Device display name"
+          - name: device_type
+            description: "Hardware type (POS, Scanner, etc.)"
+          - name: status
+            description: "Device status (online, offline, maintenance)"
+          - name: created_at
+            description: "Device registration timestamp"
+
+      - name: subscriptions
+        identifier: app_database_subscriptions
+        description: "Subscription lifecycle management"
+        columns:
+          - name: subscription_id
+            description: "Unique subscription identifier"
+            tests:
+              - unique
+              - not_null
+          - name: account_id
+            description: "Foreign key to accounts"
+            tests:
+              - not_null
+              - relationships:
+                  to: source('app_database', 'accounts')
+                  field: account_id
+          - name: plan_name
+            description: "Subscription plan name"
+          - name: status
+            description: "Subscription status (active, canceled, expired)"
+          - name: created_at
+            description: "Subscription start timestamp"
+
+      # IoT Device Events
+      - name: tap_events
+        identifier: app_database_tap_events
+        description: "Real-time tap monitoring events and sensor data"
+        columns:
+          - name: event_id
+            description: "Unique event identifier"
+            tests:
+              - unique
+              - not_null
+          - name: device_id
+            description: "Foreign key to devices"
+            tests:
+              - not_null
+              - relationships:
+                  to: source('app_database', 'devices')
+                  field: device_id
+          - name: user_id
+            description: "Foreign key to users"
+            tests:
+              - relationships:
+                  to: source('app_database', 'users')
+                  field: user_id
+          - name: event_type
+            description: "Type of tap event"
+          - name: timestamp
+            description: "Event occurrence time"
+
+      # User Activity & Sessions
+      - name: user_sessions
+        identifier: app_database_user_sessions
+        description: "Application login and usage tracking"
+        columns:
+          - name: session_id
+            description: "Unique session identifier"
+            tests:
+              - unique
+              - not_null
+          - name: user_id
+            description: "Foreign key to users"
+            tests:
+              - not_null
+              - relationships:
+                  to: source('app_database', 'users')
+                  field: user_id
+          - name: start_time
+            description: "Session start timestamp"
+          - name: end_time
+            description: "Session end timestamp"
+          - name: duration_seconds
+            description: "Session duration in seconds"
+
+      - name: page_views
+        identifier: app_database_page_views
+        description: "Web and mobile app navigation events"
+        columns:
+          - name: page_view_id
+            description: "Unique page view identifier"
+            tests:
+              - unique
+              - not_null
+          - name: session_id
+            description: "Foreign key to user_sessions"
+            tests:
+              - not_null
+              - relationships:
+                  to: source('app_database', 'user_sessions')
+                  field: session_id
+          - name: page_url
+            description: "Page URL"
+          - name: timestamp
+            description: "Page view timestamp"
+
+      - name: feature_usage
+        identifier: app_database_feature_usage
+        description: "Premium feature interaction tracking"
+        columns:
+          - name: usage_id
+            description: "Unique usage identifier"
+            tests:
+              - unique
+              - not_null
+          - name: user_id
+            description: "Foreign key to users"
+            tests:
+              - not_null
+              - relationships:
+                  to: source('app_database', 'users')
+                  field: user_id
+          - name: feature_name
+            description: "Feature identifier"
+          - name: usage_count
+            description: "Number of uses"
+          - name: timestamp
+            description: "Usage timestamp"

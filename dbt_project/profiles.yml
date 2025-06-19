@@ -1,0 +1,27 @@
+saas_data_platform:
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      user: saas_user
+      password: saas_secure_password_2024
+      port: 5432
+      dbname: saas_platform_dev
+      schema: public
+      threads: 4
+      keepalives_idle: 0
+      search_path: "public"
+    
+    prod:
+      type: postgres
+      host: postgres
+      user: saas_user
+      password: saas_secure_password_2024
+      port: 5432
+      dbname: saas_platform_prod
+      schema: public
+      threads: 8
+      keepalives_idle: 0
+      search_path: "public"
+      
+  target: dev

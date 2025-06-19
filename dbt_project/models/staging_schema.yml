@@ -1,0 +1,37 @@
+version: 2
+
+models:
+  # =============================================================================
+  # STAGING MODELS - App Database
+  # =============================================================================
+  
+  - name: stg_app_database__accounts
+    description: "Standardized customer account records from the application database"
+    columns:
+      - name: account_id
+        description: "Unique identifier for customer accounts"
+        tests:
+          - unique
+          - not_null
+      - name: account_key
+        description: "Surrogate key for dimensional modeling"
+        tests:
+          - unique
+      - name: account_status
+        description: "Current status of the account"
+        tests:
+          - accepted_values:
+              values: ['active', 'trial', 'churned', 'suspended', 'unknown']
+  
+  - name: stg_app_database__locations
+    description: "Individual bar/restaurant locations within customer accounts"
+    columns:
+      - name: location_id
+        description: "Unique identifier for locations"
+        tests:
+          - unique
+          - not_null
+      - name: account_id
+        description: "Reference to parent customer account"
+        tests:
+          - not_null

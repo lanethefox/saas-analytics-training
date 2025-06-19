@@ -1,0 +1,92 @@
+version: 2
+
+models:
+  # Product Mart Models
+  - name: mart_product__adoption
+    description: >
+      Product adoption analytics mart providing feature usage insights, adoption trends,
+      and value impact analysis. Supports product strategy and roadmap prioritization.
+    columns:
+      - name: feature_name
+        description: Feature name
+        tests:
+          - unique
+          - not_null
+      - name: feature_category
+        description: Feature categorization
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['core', 'advanced', 'enterprise', 'beta', 'deprecated']
+      - name: adoption_stage
+        description: Feature adoption lifecycle stage
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['introduction', 'growth', 'maturity', 'decline']
+      - name: adoption_rate
+        description: Overall adoption rate percentage
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: user_count
+        description: Total users of feature
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: customer_count
+        description: Total customers using feature
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: monthly_active_users
+        description: Monthly active users
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: average_sessions_per_user
+        description: Average sessions per user
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: stickiness_score
+        description: Feature stickiness score (0-100)
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: revenue_impact
+        description: Revenue correlated with feature usage
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: strategic_value_score
+        description: Strategic value assessment (0-100)
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+      - name: adoption_trend
+        description: Feature adoption trend
+        tests:
+          - accepted_values:
+              values: ['accelerating', 'growing', 'stable', 'declining', 'new']
+      - name: recommended_action
+        description: Product strategy recommendation
+        tests:
+          - not_null
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "user_count >= customer_count"
+          tags: ['data_quality']
+      - dbt_utils.expression_is_true:
+          expression: "monthly_active_users <= user_count"
+          tags: ['data_quality']

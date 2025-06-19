@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: app_database_simple
+    database: saas_platform_dev
+    schema: public
+    
+    tables:
+      - name: accounts
+        columns:
+          - name: account_id
+          - name: account_name
+          - name: created_at

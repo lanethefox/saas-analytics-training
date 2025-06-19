@@ -1,0 +1,55 @@
+name: 'saas_data_platform'
+version: '1.0.0'
+config-version: 2
+
+profile: 'saas_data_platform'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  saas_data_platform:
+    sources:
+      +materialized: view
+      +schema: raw
+    
+    staging:
+      +materialized: view
+      +schema: staging
+      
+    intermediate:
+      +materialized: table
+      +schema: intermediate
+      
+    entity:
+      +materialized: table
+      +schema: entity
+      
+    mart:
+      +materialized: table
+      +schema: mart
+
+tests:
+  +store_failures: true
+  +severity: warn
+
+seeds:
+  saas_data_platform:
+    +schema: seeds
+
+vars:
+  start_date: '2019-01-01'
+  generate_sample_data: true
+  customer_count: 20000
+  location_count: 30000
+  run_started_at: '{{ run_started_at }}'
+
+require-dbt-version: ">=1.8.0"

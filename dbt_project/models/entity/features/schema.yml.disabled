@@ -1,0 +1,138 @@
+version: 2
+
+models:
+  - name: entity_features
+    description: |
+      Entity-Centric Model: Features (Atomic/Current State)
+      
+      This table provides a comprehensive view of current feature adoption status with usage
+      metrics, customer segments, and business impact analysis. It serves as the primary
+      source for product planning, feature prioritization, adoption tracking, and value
+      assessment.
+      
+      Key Features:
+      - Feature adoption rates across customer segments
+      - Revenue correlation and business impact metrics
+      - Stickiness and engagement measurement
+      - Strategic importance and value scoring
+      - Lifecycle stage and roadmap recommendations
+    
+    columns:
+      - name: feature_name
+        description: Unique name identifier for the feature
+        tests:
+          - not_null
+          - unique
+      
+      - name: feature_key
+        description: Surrogate key for the feature
+        tests:
+          - not_null
+      
+      - name: feature_category
+        description: Category grouping for the feature
+        tests:
+          - not_null
+      
+      - name: adoption_stage
+        description: Current adoption stage (universal, mainstream, growing, emerging, experimental)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['universal', 'mainstream', 'growing', 'emerging', 'experimental']
+      
+      - name: feature_value_score
+        description: Composite value score (0-100)
+        tests:
+          - not_null
+      
+      - name: strategic_importance
+        description: Strategic classification (critical, important, valuable, experimental)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['critical', 'important', 'valuable', 'experimental']
+
+  - name: entity_features_history
+    description: |
+      Entity-Centric Model: Features (Change History)
+      
+      This table tracks feature evolution including releases, adoption progressions, and
+      usage changes over time. It enables product analytics, feature lifecycle analysis,
+      adoption pattern recognition, and roadmap planning.
+      
+      Key Features:
+      - Adoption progression tracking over time
+      - Value score evolution
+      - Strategic importance transitions
+      - Lifecycle stage changes
+      - Usage pattern evolution
+    
+    columns:
+      - name: feature_history_id
+        description: Unique identifier for each history record
+        tests:
+          - not_null
+          - unique
+      
+      - name: feature_name
+        description: Feature name identifier
+        tests:
+          - not_null
+      
+      - name: change_type
+        description: Type of change recorded
+        tests:
+          - not_null
+      
+      - name: valid_from
+        description: Timestamp when this record became valid
+        tests:
+          - not_null
+      
+      - name: is_current
+        description: Flag indicating if this is the current record
+        tests:
+          - not_null
+
+  - name: entity_features_monthly
+    description: |
+      Entity-Centric Model: Features (Monthly Strategic Grain)
+      
+      This table provides monthly aggregations of feature performance optimized for product
+      planning, strategic decision-making, and roadmap prioritization. It supports feature
+      ROI analysis, customer value assessment, and adoption trend analysis.
+      
+      Key Features:
+      - Monthly usage and adoption metrics
+      - Revenue impact estimation
+      - Feature momentum classification
+      - Strategic value scoring by month
+      - Lifecycle stage progression
+    
+    columns:
+      - name: feature_name
+        description: Feature name identifier
+        tests:
+          - not_null
+      
+      - name: month_start_date
+        description: Start date of the month
+        tests:
+          - not_null
+      
+      - name: monthly_usage_events
+        description: Total usage events in the month
+        tests:
+          - not_null
+      
+      - name: monthly_strategic_value
+        description: Strategic value score for the month
+        tests:
+          - not_null
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - feature_name
+            - month_start_date
