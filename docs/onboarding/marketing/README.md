@@ -430,6 +430,7 @@ ORDER BY month DESC;
 - [Query Patterns](../common/query-patterns.md) - SQL templates
 - [Attribution Guide](./attribution-methodology.md) - Attribution models explained
 - [Channel Playbooks](./channel-playbooks/) - Channel-specific strategies
+- [Quarterly Goals](./quarterly-goals.md) - 2025 SMART goals and roadmap
 
 ## 🚦 Getting Started Checklist
 

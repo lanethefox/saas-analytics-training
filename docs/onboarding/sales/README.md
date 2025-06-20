@@ -307,6 +307,7 @@ Compare metrics against:
 - [Query Patterns](../common/query-patterns.md) - Reusable SQL patterns
 - [Data Dictionary](../common/data-dictionary.md) - Field definitions
 - [Sales Dashboards](./dashboards.md) - Pre-built Superset dashboards
+- [Quarterly Goals](./quarterly-goals.md) - 2025 SMART goals and roadmap
 
 ## 🚦 Getting Started Checklist
 

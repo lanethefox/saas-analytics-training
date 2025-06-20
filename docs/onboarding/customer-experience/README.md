@@ -390,6 +390,7 @@ Key ratios to track:
 - [Query Patterns](../common/query-patterns.md) - Reusable SQL templates
 - [Health Score Methodology](./health-score-guide.md) - Scoring algorithm details
 - [Churn Playbook](./churn-prevention-playbook.md) - Intervention strategies
+- [Quarterly Goals](./quarterly-goals.md) - 2025 SMART goals and roadmap
 
 ## 🚦 Getting Started Checklist
 

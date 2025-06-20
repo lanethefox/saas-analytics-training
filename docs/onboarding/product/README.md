@@ -437,6 +437,7 @@ Segment by:
 - [Query Patterns](../common/query-patterns.md) - SQL templates
 - [Feature Launch Guide](./feature-launch-guide.md) - Launch process
 - [A/B Testing Framework](./ab-testing-framework.md) - Experimentation guide
+- [Quarterly Goals](./quarterly-goals.md) - 2025 SMART goals and roadmap
 
 ## 🚦 Getting Started Checklist
 
