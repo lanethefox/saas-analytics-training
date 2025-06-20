@@ -26,7 +26,7 @@ select
     request->>'idempotency_key' as idempotency_key,
     
     -- Timestamps
-    to_timestamp(created) as event_created_at,
+    created as event_created_at,
     
     -- Event categorization
     case

@@ -1,0 +1,11 @@
+# Analytics Platform Cron Schedule
+# Format: minute hour day month weekday command
+
+# Daily analytics refresh at 2 AM
+0 2 * * * /scripts/daily_refresh.sh >> /var/log/analytics/cron.log 2>&1
+
+# Hourly health check
+0 * * * * echo "Health check at $(date)" >> /var/log/analytics/health.log
+
+# Weekly full refresh on Sunday at 3 AM
+0 3 * * 0 /scripts/daily_refresh.sh --full-refresh >> /var/log/analytics/weekly.log 2>&1

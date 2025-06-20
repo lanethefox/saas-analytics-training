@@ -33,7 +33,7 @@ COPY docker/airflow.cfg /opt/airflow/airflow.cfg
 
 # Copy and set up initialization script
 USER root
-COPY docker/airflow_init.sh /opt/airflow/airflow_init.sh
+COPY docker/airflow_init_fixed.sh /opt/airflow/airflow_init.sh
 RUN chmod +x /opt/airflow/airflow_init.sh
 USER airflow
 

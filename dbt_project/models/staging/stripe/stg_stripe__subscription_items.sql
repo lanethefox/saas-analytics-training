@@ -110,7 +110,7 @@ enriched as (
         quantity * (price->>'unit_amount')::numeric / 100.0 as total_amount_usd,
         
         -- Timestamps
-        to_timestamp(created) as subscription_item_created_at,
+        created as subscription_item_created_at,
         
         -- Data quality flags
         case 

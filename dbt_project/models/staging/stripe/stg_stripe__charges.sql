@@ -52,7 +52,7 @@ select
     billing_details->'address'->>'postal_code' as billing_postal_code,
     
     -- Timing
-    to_timestamp(created) as stripe_charge_created_at,
+    created as stripe_charge_created_at,
     
     -- Account mapping
     metadata->>'account_id' as account_id,

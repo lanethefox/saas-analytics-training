@@ -46,7 +46,7 @@ select
     extract(days from (period_end - period_start)) as billing_period_days,
     
     -- Dates
-    to_timestamp(created) as invoice_created_at,
+    created as invoice_created_at,
     due_date,
     
     -- Status categorization

@@ -16,7 +16,7 @@ renamed AS (
         name AS campaign_name,
         status AS campaign_status,
         objective,
-        bid_strategy,
+        NULL::text as bid_strategy,  -- Column doesn't exist
         
         -- Budget Information
         daily_budget,
@@ -40,8 +40,8 @@ renamed AS (
         
         -- JSON Fields
         actions,
-        targeting,
-        performance_stats,
+        NULL::jsonb as targeting,  -- Column doesn't exist
+        NULL::jsonb as performance_stats,  -- Column doesn't exist
         
         -- Timestamps
         created_time,

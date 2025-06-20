@@ -1,47 +1,199 @@
-# Environment
+# Environment variables
 .env
-venv/
-*.pyc
+.env.local
+.env.*.local
+
+# Data files
+*.csv
+*.parquet
+*.json
+/data/
+raw_data/
+processed_data/
+
+# Logs
+*.log
+logs/
+*.log.*
+/airflow/logs/
+/dbt_project/logs/
+
+# Python
 __pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 .pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+.pytype/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+.ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+.jupyter/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-.DS_Store
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
 
-# Logs
-*.log
-logs/
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
 
 # dbt
-dbt_project/target/
-dbt_project/dbt_packages/
-dbt_project/logs/
+target/
+dbt_packages/
+dbt_modules/
+logs/
+.user.yml
 
-# Data files
-data/synthetic/
-data/test_*/
-*.csv
-*.json
-*.parquet
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# Airflow
+airflow.db
+airflow-webserver.pid
+standalone_admin_password.txt
+webserver_config.py
+
+# ML/MLflow
+mlruns/
+mlflow.db
+outputs/
+models/
+
+# Superset
+superset.db
+superset_cache/
+superset-websocket/
+
+# Grafana
+grafana-storage/
+
+# PostgreSQL
+*.sql.bak
+*.dump
+postgres-data/
+
+# Redis
+dump.rdb
+
+# MinIO
+.minio.sys/
+minio-data/
 
 # Temporary files
 *.tmp
+*.temp
 *.bak
 *.backup
-temp_*
+*.old
+tmp/
+temp/
 
-# Reports
-reports/
-
-# Database dumps
-*.sql.gz
-*.dump
-
-# Credentials
-credentials/
+# Credentials and secrets
 *.pem
 *.key
+*.cert
+*.crt
+credentials/
+secrets/
+
+# Documentation build
+docs/_build/
+site/
+
+# Test artifacts
+.coverage
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+nosetests.xml
+test-results/
+
+# Package files
+*.tar
+*.tar.gz
+*.zip
+*.7z
+*.rar
+
+# Generated files
+generated/
+output/
+results/
+
+# Cache
+.cache/
+*.cache
+
+# Local development
+local/
+.local/
+scratch/
+
+# Validation files
+validate_setup.sh
+
+# Platform specific
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

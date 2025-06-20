@@ -17,7 +17,7 @@ renamed AS (
         sessions,
         users,
         new_users,
-        COALESCE(page_views, pageviews) AS page_views, -- Handle both column names
+        page_views,
         bounce_rate,
         avg_session_duration,
         
@@ -25,9 +25,9 @@ renamed AS (
         goal_completions,
         goal_conversion_rate,
         
-        -- Revenue Metrics
-        revenue,
-        transactions,
+        -- Revenue Metrics (columns don't exist)
+        NULL::numeric as revenue,
+        NULL::integer as transactions,
         
         -- Calculated Metrics
         CASE 
@@ -40,14 +40,12 @@ renamed AS (
             ELSE 0 
         END AS pages_per_session,
         
-        CASE 
-            WHEN transactions > 0 THEN revenue / transactions 
-            ELSE 0 
-        END AS avg_transaction_value,
+        -- avg_transaction_value not calculated due to missing columns
+        0::numeric AS avg_transaction_value,
         
-        -- Dimensions
-        device_category,
-        traffic_sources,
+        -- Dimensions (columns don't exist)
+        NULL::text as device_category,
+        NULL::jsonb as traffic_sources,
         
         -- Timestamps
         created_at,

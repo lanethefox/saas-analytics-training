@@ -11,7 +11,7 @@ renamed as (
     select
         -- IDs
         id as price_id,
-        product as product_id,
+        NULL::text as product_id,  -- Product column doesn't exist in our schema
         
         -- Price Details
         active as is_active,
@@ -24,7 +24,7 @@ renamed as (
         recurring_interval_count as interval_count,
         
         -- Metadata
-        metadata,
+        '{}'::jsonb as metadata,  -- Metadata column doesn't exist in our schema
         
         -- Price Calculations
         cast(unit_amount as float) / 100 as price_amount,
@@ -65,12 +65,11 @@ renamed as (
         end as normalized_currency,
         
         -- Timestamps
-        to_timestamp(created) as created_at,
+        created as created_at,
         
         -- Data Quality
         case
             when id is null then 'Missing Price ID'
-            when product is null then 'Missing Product ID'
             when unit_amount is null or unit_amount < 0 then 'Invalid Amount'
             when currency is null then 'Missing Currency'
             else 'Valid'

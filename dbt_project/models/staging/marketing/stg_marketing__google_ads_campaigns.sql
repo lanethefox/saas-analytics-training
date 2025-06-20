@@ -16,14 +16,14 @@ renamed AS (
         name AS campaign_name,
         status AS campaign_status,
         campaign_type,
-        type AS campaign_subtype,
+        NULL::text AS campaign_subtype,  -- Column doesn't exist
         advertising_channel_type,
-        campaign_objective,
+        NULL::text as campaign_objective,  -- Column doesn't exist
         
         -- Budget Information
         budget_amount,
         target_cpa,
-        budget AS budget_details,
+        NULL::jsonb AS budget_details,  -- Column doesn't exist
         
         -- Date Range
         start_date,
@@ -57,8 +57,8 @@ renamed AS (
         END AS conversion_rate,
         
         -- JSON Fields
-        targeting_settings,
-        performance_stats,
+        NULL::jsonb as targeting_settings,  -- Column doesn't exist
+        NULL::jsonb as performance_stats,  -- Column doesn't exist
         
         -- Timestamps
         created_at,

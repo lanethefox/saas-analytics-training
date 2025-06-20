@@ -21,8 +21,8 @@ enriched as (
         end as account_id,
         
         -- Customer details
-        lower(trim(email)) as customer_email,
-        trim(name) as customer_name,
+        NULL::text as customer_email,
+        NULL::text as customer_name,
         trim(description) as customer_description,
         phone,
         currency,
@@ -31,8 +31,8 @@ enriched as (
         livemode,
         invoice_prefix,
         
-        -- Balance (convert from cents to dollars)
-        balance / 100.0 as account_balance_usd,
+        -- Balance (not in this table, default to 0)
+        0::decimal as account_balance_usd,
         
         -- Shipping information
         case 
@@ -90,17 +90,12 @@ enriched as (
         -- Customer status classification
         case 
             when delinquent then 'delinquent'
-            when balance < 0 then 'credit_balance'
-            when balance > 0 then 'outstanding_balance'
             else 'current'
         end as customer_status,
         
         -- Risk scoring
         case 
             when delinquent then 100
-            when balance > 10000 then 80  -- Balance in cents, so $100+
-            when balance > 5000 then 60    -- $50+
-            when balance > 0 then 40
             else 0
         end as payment_risk_score,
         

@@ -2,7 +2,7 @@ saas_data_platform:
   outputs:
     dev:
       type: postgres
-      host: localhost
+      host: postgres
       user: saas_user
       password: saas_secure_password_2024
       port: 5432

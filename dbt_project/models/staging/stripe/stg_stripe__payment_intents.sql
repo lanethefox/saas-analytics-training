@@ -43,7 +43,7 @@ select
     jsonb_array_length(charges->'data') as charge_count,
     
     -- Timestamps
-    to_timestamp(created) as payment_intent_created_at,
+    created as payment_intent_created_at,
     
     -- Status categorization
     case

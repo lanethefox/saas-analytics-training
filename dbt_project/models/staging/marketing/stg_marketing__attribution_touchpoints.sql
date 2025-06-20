@@ -16,7 +16,7 @@ renamed as (
         
         -- Attribution Details
         channel,
-        touchpoint_type,
+        NULL::text as touchpoint_type,  -- Column doesn't exist
         attribution_weight,
         
         -- Additional fields from actual schema
@@ -25,8 +25,8 @@ renamed as (
         source,
         content,
         touchpoint_position,
-        position_in_journey,
-        interaction_details,
+        touchpoint_position as position_in_journey,
+        NULL::jsonb as interaction_details,  -- Column doesn't exist
         
         -- Timestamps
         touchpoint_date as touchpoint_timestamp,
@@ -34,13 +34,9 @@ renamed as (
         
         -- Derived Fields
         case
-            when touchpoint_type = 'first_touch' then 1.0
-            when touchpoint_type = 'last_touch' then 1.0
-            when touchpoint_type = 'linear' then attribution_weight
-            when touchpoint_type = 'time_decay' then attribution_weight
-            when touchpoint_type = 'position_based' and position_in_journey in (1, touchpoint_position) then 0.4
-            when touchpoint_type = 'position_based' then 0.2 / nullif(attribution_weight, 0)
-            else coalesce(attribution_weight, 0)
+            -- Since touchpoint_type doesn't exist, use attribution_weight directly
+            when attribution_weight is not null then attribution_weight
+            else 0.0
         end as normalized_attribution_weight,
         
         -- Channel Groupings
@@ -55,11 +51,8 @@ renamed as (
         end as channel_group,
         
         -- Attribution Model Type
-        case
-            when touchpoint_type in ('first_touch', 'last_touch') then 'Single Touch'
-            when touchpoint_type in ('linear', 'time_decay', 'position_based') then 'Multi Touch'
-            else 'Custom'
-        end as attribution_model_type,
+        -- Default to Multi Touch since touchpoint_type doesn't exist
+        'Multi Touch' as attribution_model_type,
         
         -- Data Quality
         case

@@ -10,56 +10,59 @@ with source as (
 renamed as (
     select
         -- IDs
-        id as owner_id,
-        userid as user_id,
-        activeuserid as active_user_id,
+        id::text as owner_id,
+        userid::text as user_id,
         
-        -- Owner Information
-        lower(trim(email)) as email,
-        trim(firstname) as first_name,
-        trim(lastname) as last_name,
-        type as owner_type,
-        archived,
+        -- Owner Information (handle null columns gracefully)
+        lower(trim(coalesce(email, '')))::text as email,
+        trim(coalesce(firstname, ''))::text as first_name,
+        trim(coalesce(lastname, ''))::text as last_name,
+        coalesce(archived, false)::boolean as archived,
         
         -- Derived Fields
-        concat(trim(firstname), ' ', trim(lastname)) as full_name,
-        
-        -- Owner Type Categorization
         case
-            when lower(type) = 'user' then 'Individual User'
-            when lower(type) = 'team' then 'Team'
-            when lower(type) = 'queue' then 'Queue'
-            else 'Other'
-        end as owner_category,
+            when firstname is not null and lastname is not null then
+                concat(trim(firstname), ' ', trim(lastname))
+            when firstname is not null then trim(firstname)
+            when lastname is not null then trim(lastname)
+            else 'Unknown'
+        end::text as full_name,
+        
+        -- Owner Type (defaulting since 'type' column doesn't exist)
+        'User'::text as owner_type,
+        'Individual User'::text as owner_category,
         
         -- Email Domain Extraction
-        split_part(email, '@', 2) as email_domain,
+        case
+            when email like '%@%' then split_part(email, '@', 2)
+            else null
+        end::text as email_domain,
         
         -- Internal vs External
         case
             when email like '%@hubspot.com' then 'HubSpot Internal'
             when email like '%@example.com' then 'Internal'  -- Replace with actual company domain
             else 'External'
-        end as owner_classification,
+        end::text as owner_classification,
         
-        -- Status
+        -- Status (simplified since activeuserid doesn't exist)
         case
             when archived = true then 'Inactive'
-            when activeuserid is not null then 'Active'
-            else 'Unknown'
-        end as owner_status,
-        
-        -- Remote list processing (if needed)
-        remotelist,
+            else 'Active'
+        end::text as owner_status,
         
         -- Tenure Calculation
-        current_date - createdat::date as tenure_days,
+        case
+            when createdat is not null then (current_date - createdat::date)::integer
+            else 0
+        end::integer as tenure_days,
         
         case
+            when createdat is null then 'Unknown'
             when current_date - createdat::date < 90 then 'New'
             when current_date - createdat::date < 365 then 'Experienced'
             else 'Veteran'
-        end as tenure_category,
+        end::text as tenure_category,
         
         -- Data Quality
         case
@@ -68,14 +71,14 @@ renamed as (
             when email not like '%@%' then 'Invalid Email Format'
             when firstname is null and lastname is null then 'Missing Name'
             else 'Valid'
-        end as data_quality_flag,
+        end::text as data_quality_flag,
         
         -- Timestamps
-        createdat as owner_created_at,
-        updatedat as owner_updated_at,
+        createdat::timestamp as owner_created_at,
+        updatedat::timestamp as owner_updated_at,
         
         -- Audit Fields
-        current_timestamp as _stg_loaded_at
+        current_timestamp::timestamp as _stg_loaded_at
 
     from source
 ),

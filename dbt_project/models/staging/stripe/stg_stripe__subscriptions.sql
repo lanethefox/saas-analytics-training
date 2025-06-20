@@ -21,46 +21,28 @@ enriched as (
         -- Subscription details
         status,
         cancel_at_period_end,
-        collection_method,
+        'charge_automatically'::text as collection_method,  -- Default value since column doesn't exist
         days_until_due,
         
         -- Billing information
-        to_timestamp(billing_cycle_anchor) as billing_cycle_anchor,
-        to_timestamp(current_period_start) as current_period_start,
-        to_timestamp(current_period_end) as current_period_end,
-        to_timestamp(start_date) as subscription_start_date,
+        billing_cycle_anchor,
+        current_period_start,
+        current_period_end,
+        start_date as subscription_start_date,
         
         -- Trial information
-        case 
-            when trial_start is not null then to_timestamp(trial_start)
-            else null
-        end as trial_start_date,
-        
-        case 
-            when trial_end is not null then to_timestamp(trial_end)
-            else null
-        end as trial_end_date,
+        trial_start as trial_start_date,
+        trial_end as trial_end_date,
         
         case
-            when trial_end is not null and trial_end > extract(epoch from current_timestamp) then true
+            when trial_end is not null and trial_end > current_timestamp then true
             else false
         end as is_in_trial,
         
         -- Cancellation information
-        case 
-            when canceled_at is not null then to_timestamp(canceled_at)
-            else null
-        end as canceled_at_date,
-        
-        case 
-            when cancel_at is not null then to_timestamp(cancel_at)
-            else null
-        end as cancel_at_date,
-        
-        case 
-            when ended_at is not null then to_timestamp(ended_at)
-            else null
-        end as ended_at_date,
+        canceled_at as canceled_at_date,
+        cancel_at as cancel_at_date,
+        ended_at as ended_at_date,
         
         -- Extract account_id from metadata
         case 
@@ -104,8 +86,8 @@ enriched as (
         end as churn_risk_score,
         
         -- Subscription age
-        extract(days from (current_timestamp - to_timestamp(start_date))) as subscription_age_days,
-        extract(months from age(current_timestamp, to_timestamp(start_date))) as subscription_age_months,
+        extract(days from (current_timestamp - start_date)) as subscription_age_days,
+        extract(months from age(current_timestamp, start_date)) as subscription_age_months,
         
         -- Additional flags
         livemode,
@@ -124,7 +106,7 @@ enriched as (
         items as subscription_items,
         
         -- Metadata
-        to_timestamp(created) as subscription_created_at,
+        created as subscription_created_at,
         current_timestamp as _stg_loaded_at
 
     from source_data

@@ -16,29 +16,23 @@ renamed AS (
         name AS campaign_name,
         status AS campaign_status,
         campaign_type,
-        type AS campaign_subtype,
+        NULL::text AS campaign_subtype,  -- Column doesn't exist
         objective_type,
-        cost_type,
+        NULL::text as cost_type,  -- Column doesn't exist
         
         -- Budget Information
         daily_budget,
         total_budget,
-        budget AS budget_details,
+        NULL::jsonb AS budget_details,  -- Column doesn't exist
         
         -- Date Range
         start_date,
         end_date,
         
-        -- Timestamp fields (bigint to timestamp conversion if needed)
+        -- Timestamp fields
         created_time,
-        CASE 
-            WHEN start_at IS NOT NULL THEN to_timestamp(start_at::double precision / 1000)
-            ELSE NULL
-        END AS start_timestamp,
-        CASE 
-            WHEN end_at IS NOT NULL THEN to_timestamp(end_at::double precision / 1000)
-            ELSE NULL
-        END AS end_timestamp,
+        NULL::timestamp AS start_timestamp,  -- start_at column doesn't exist
+        NULL::timestamp AS end_timestamp,  -- end_at column doesn't exist
         
         -- Performance Metrics
         impressions,
@@ -67,9 +61,9 @@ renamed AS (
             ELSE 0 
         END AS conversion_rate,
         
-        -- JSON Fields
-        targeting,
-        performance_stats,
+        -- JSON Fields (columns don't exist)
+        NULL::jsonb as targeting,
+        NULL::jsonb as performance_stats,
         
         -- Timestamps
         created_at,

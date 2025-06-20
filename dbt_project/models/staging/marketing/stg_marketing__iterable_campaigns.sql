@@ -21,25 +21,23 @@ renamed AS (
         
         -- Audience Information
         send_size,
-        list_size,
+        NULL::integer as list_size,  -- Column doesn't exist
         
         -- Date/Time Fields
         created_at_source,
         updated_at_source,
         start_at,
         ended_at,
-        send_date,
+        NULL::timestamp as send_date,  -- Column doesn't exist
         
-        -- JSON Fields
-        metrics,
-        performance_stats,
-        segment_info,
+        -- JSON Fields (columns don't exist)
+        NULL::jsonb as metrics,
+        NULL::jsonb as performance_stats,
+        NULL::jsonb as segment_info,
         
         -- Calculated Fields
-        CASE 
-            WHEN list_size > 0 THEN send_size::float / list_size * 100 
-            ELSE 0 
-        END AS send_rate,
+        -- send_rate not calculated due to missing list_size
+        0::numeric AS send_rate,
         
         -- Timestamps
         created_at,

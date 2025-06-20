@@ -138,7 +138,7 @@ final as (
         cm.performance_tier,
         
         -- Attribution metrics
-        cm.linear_conversions / greatest(date_part('day', age(current_date, campaign_key::date)), 1) as daily_attributed_conversions,
+        cm.linear_conversions / greatest(date_part('day', age(current_date, cds.performance_date)), 1) as daily_attributed_conversions,
         cm.linear_cpa as attributed_cpa,
         
         -- Budget pacing
