@@ -207,6 +207,14 @@ scratch/
 # Validation files
 validate_setup.sh
 
+# Test files
+docker-compose.test.yml
+setup_test.sh
+validate_test_setup.sh
+TEST_INSTALLATION_PLAN.md
+DOCKER_CONNECTIVITY_ISSUE.md
+*_test_data/
+
 # Platform specific
 node_modules/
 npm-debug.log*
