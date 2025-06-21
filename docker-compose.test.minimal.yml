@@ -1,0 +1,135 @@
+services:
+  # PostgreSQL Database - TEST INSTANCE
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: saas_test_postgres
+    environment:
+      POSTGRES_DB: saas_platform_dev
+      POSTGRES_USER: saas_user
+      POSTGRES_PASSWORD: saas_secure_password_2024
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C --auth-host=md5 --auth-local=md5"
+      # Multiple databases for different services
+      POSTGRES_MULTIPLE_DATABASES: saas_platform_dev,superset_db,warp_memory
+    ports:
+      - "15432:5432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./database:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U saas_user -d saas_platform_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - saas_test_network
+
+  # Redis for Caching and Feature Store
+  redis:
+    image: redis:7-alpine
+    container_name: saas_test_redis
+    ports:
+      - "16379:6379"
+    volumes:
+      - redis_test_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    networks:
+      - saas_test_network
+
+  # dbt for Data Transformations
+  dbt:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dbt
+    container_name: saas_test_dbt
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./dbt_project:/usr/app/dbt
+    environment:
+      DBT_PROFILES_DIR: /usr/app/dbt
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: saas_user
+      DB_PASSWORD: saas_secure_password_2024
+      DB_NAME: saas_platform_dev
+    command: tail -f /dev/null
+    restart: unless-stopped
+    networks:
+      - saas_test_network
+
+  # Apache Superset for BI/Dashboards
+  superset:
+    build:
+      context: ./superset
+      dockerfile: Dockerfile
+    container_name: saas_test_superset
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      DATABASE_DIALECT: postgresql
+      DATABASE_USER: saas_user
+      DATABASE_PASSWORD: saas_secure_password_2024
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_DB: superset_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SECRET_KEY: f5d1242e5ed24c96a8c2f7830f2c9b4e
+      SUPERSET_ENV: production
+      PYTHONPATH: /app/pythonpath
+      SUPERSET_CONFIG_PATH: /app/pythonpath/superset_config.py
+    ports:
+      - "18088:8088"
+    volumes:
+      - ./superset:/app/docker
+      - superset_test_home:/app/superset_home
+    command: tail -f /dev/null
+    restart: unless-stopped
+    networks:
+      - saas_test_network
+
+  # JupyterLab for Data Science
+  jupyter:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.jupyter
+    container_name: saas_test_jupyter
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+      JUPYTER_TOKEN: "saas_ml_token_2024"
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: saas_user
+      DB_PASSWORD: saas_secure_password_2024
+      DB_NAME: saas_platform_dev
+    ports:
+      - "18888:8888"
+    volumes:
+      - ./jupyter:/home/jovyan/work
+      - jupyter_test_data:/home/jovyan/.local
+    command: start-notebook.sh --NotebookApp.token='saas_ml_token_2024'
+    restart: unless-stopped
+    networks:
+      - saas_test_network
+
+volumes:
+  postgres_test_data:
+  redis_test_data:
+  superset_test_home:
+  jupyter_test_data:
+
+networks:
+  saas_test_network:
+    driver: bridge
