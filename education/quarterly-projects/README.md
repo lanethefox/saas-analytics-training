@@ -28,6 +28,12 @@ These projects simulate real quarterly initiatives that analytics teams undertak
 **Difficulty**: Intermediate  
 **Key Deliverable**: Feature impact scorecard and recommendations
 
+### Q5: Analytics Engineering Excellence
+**Domain**: Analytics Engineering  
+**Duration**: 12 weeks  
+**Difficulty**: Advanced  
+**Key Deliverable**: Modernized data platform with unified metrics layer
+
 ## 📋 Project Structure
 
 Each project includes:

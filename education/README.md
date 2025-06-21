@@ -14,6 +14,7 @@ Welcome to the comprehensive education materials for the B2B SaaS Analytics Plat
 - **[Quarterly Projects](quarterly-projects/)** - Long-term projects aligned with business OKRs
 
 ### Domain-Specific Learning
+- **[Analytics Engineering](analytics_engineering/)** - Entity models, incremental processing, metrics governance
 - **[Sales Analytics](sales/)** - Pipeline optimization, forecasting, territory planning
 - **[Customer Success](customer_success/)** - Churn prediction, health scoring, retention
 - **[Marketing Analytics](marketing/)** - Attribution, CAC, campaign ROI

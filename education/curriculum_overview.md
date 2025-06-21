@@ -31,25 +31,32 @@ Upon completing this curriculum, learners will be able to:
 
 ## Program Structure
 
-### Module 1: Sales Analytics (4 weeks)
+### Module 1: Analytics Engineering (4 weeks)
+- Entity model design and maintenance
+- Incremental processing implementation
+- Grain table development and optimization
+- Mart layer architecture and governance
+- Metrics layer standardization
+
+### Module 2: Sales Analytics (4 weeks)
 - Pipeline health assessment and optimization
 - Territory planning and quota setting
 - Win/loss analysis and sales velocity metrics
 - Revenue forecasting and trend analysis
 
-### Module 2: Customer Success Analytics (4 weeks)
+### Module 3: Customer Success Analytics (4 weeks)
 - Churn prediction and prevention strategies
 - Customer health scoring frameworks
 - Support efficiency optimization
 - Retention and expansion analysis
 
-### Module 3: Marketing Analytics (4 weeks)
+### Module 4: Marketing Analytics (4 weeks)
 - Multi-touch attribution modeling
 - Campaign ROI optimization
 - Lead scoring and qualification
 - Channel performance analysis
 
-### Module 4: Product Analytics (4 weeks)
+### Module 5: Product Analytics (4 weeks)
 - Feature adoption and engagement analysis
 - Cohort-based retention studies
 - A/B testing and experimentation
