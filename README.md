@@ -6,6 +6,8 @@ Learn data analytics with a complete, production-ready B2B SaaS platform. Real t
 
 This is a fully-functional analytics platform that simulates **TapFlow Analytics** - a B2B SaaS company providing IoT-powered beverage management for bars and restaurants. You'll learn by doing real analytics work on a platform used by 40,000+ businesses.
 
+**New: Simplified setup!** Core services only by default. Get running in minutes, not hours.
+
 ### 🎯 Perfect For
 - **Career Changers** wanting to break into data analytics
 - **Students** learning practical data skills
@@ -31,28 +33,18 @@ You'll work with data from:
 
 ## 🛠️ Tech Stack You'll Master
 
-<table>
-<tr>
-<td width="50%">
+### Core Services (Default Setup)
+- **PostgreSQL** - Industry-standard database with 3 years of data
+- **dbt** - Modern data transformation framework
+- **Apache Superset** - Business intelligence and dashboards
+- **Jupyter Lab** - Interactive notebooks for analysis
+- **Redis** - High-performance caching
 
-### Data Platform
-- **PostgreSQL** - Industry-standard database
-- **dbt** - Transform raw data into insights
-- **Apache Airflow** - Automate data pipelines
-- **Apache Superset** - Create interactive dashboards
-
-</td>
-<td width="50%">
-
-### Analytics Tools  
-- **SQL** - Query and analyze data
-- **Python** - Advanced analytics
-- **Jupyter** - Interactive notebooks
-- **Git** - Version control
-
-</td>
-</tr>
-</table>
+### Optional Full Stack
+Available with `--full` flag (see [BACKLOG.md](BACKLOG.md)):
+- Apache Airflow - Workflow orchestration
+- MLflow - ML experiment tracking
+- Grafana & Prometheus - System monitoring
 
 ## 🎓 Choose Your Path
 
@@ -73,31 +65,34 @@ Technical documentation for the platform:
 - Troubleshooting guides
 
 **[➡️ View Documentation](/docs)**
-## 🚦 Quick Start (15 minutes)
+## 🚦 Quick Start (10 minutes)
 
 ### Prerequisites
-Your IT team should have installed:
-- Docker Desktop (with 8GB RAM allocated)
-- Python 3.8+
-- A code editor (VS Code recommended)
+- Docker Desktop (4GB RAM for core, 8GB for full stack)
+- Python 3.8+ (optional, for data generation)
+- Git
 
 ### Setup Steps
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/saas-analytics-training.git
-   cd saas-analytics-training
+   git clone https://github.com/yourusername/data-platform.git
+   cd data-platform
    ```
 
 2. **Run the setup script**
    ```bash
+   # Core services (recommended)
    ./setup.sh
+   
+   # Or full stack with all services
+   ./setup.sh --full
    ```
    This will:
-   - Start all services
-   - Load sample data
-   - Configure dashboards
-   - Take about 10-15 minutes
+   - Start services (PostgreSQL, Redis, dbt, Superset, Jupyter)
+   - Create databases and schemas
+   - Generate sample data
+   - Initialize dashboards
 
 3. **Access your tools**
    
@@ -114,8 +109,8 @@ Your IT team should have installed:
 
 5. **Start learning!**
    - Open Superset and explore the dashboards
-   - Try the [SQL tutorial](/edu/onboarding/common/interactive-sql-tutorial.md)
-   - Pick a [learning module](/edu#-learning-paths)
+   - Access Jupyter for interactive SQL and Python
+   - Check out the education materials in `/edu`
 
 ## 💡 What You'll Build
 

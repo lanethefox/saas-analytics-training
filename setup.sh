@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# B2B SaaS Analytics Platform - Educational Setup Script
-# This script sets up the complete analytics platform for educational use
+# B2B SaaS Analytics Platform - Setup Script
+# Core services by default, use --full for complete stack
 
 set -e  # Exit on any error
 
@@ -11,6 +11,44 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
+
+# Configuration
+COMPOSE_FILE="docker-compose.yml"
+DATA_SIZE="small"
+SKIP_DATA_GEN=false
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --full)
+            COMPOSE_FILE="docker-compose.full.yml"
+            shift
+            ;;
+        --size)
+            DATA_SIZE="$2"
+            shift 2
+            ;;
+        --skip-data)
+            SKIP_DATA_GEN=true
+            shift
+            ;;
+        --help)
+            echo "Usage: ./setup.sh [OPTIONS]"
+            echo ""
+            echo "Options:"
+            echo "  --full          Use full stack including Airflow, MLflow, monitoring"
+            echo "  --size SIZE     Data generation size: tiny, small, medium, large (default: small)"
+            echo "  --skip-data     Skip data generation"
+            echo "  --help          Show this help message"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Use ./setup.sh --help for usage information"
+            exit 1
+            ;;
+    esac
+done
 
 # Print colored output
 print_status() {
@@ -31,9 +69,14 @@ print_warning() {
 
 # Header
 echo ""
-echo "=================================================="
-echo "🎓 B2B SaaS Analytics Platform - Educational Setup"
-echo "=================================================="
+echo "╔═══════════════════════════════════════════════════════════════╗"
+echo "║          🎓 B2B SaaS Analytics Training Platform              ║"
+if [[ "$COMPOSE_FILE" == "docker-compose.full.yml" ]]; then
+    echo "║                   (Full Stack Setup)                          ║"
+else
+    echo "║                   (Core Services Only)                        ║"
+fi
+echo "╚═══════════════════════════════════════════════════════════════╝"
 echo ""
 
 # Check prerequisites
@@ -52,265 +95,206 @@ if ! docker info &> /dev/null; then
     echo "Please start Docker Desktop and try again."
     exit 1
 fi
+print_success "Docker is running"
 
-# Check Python
-if ! command -v python3 &> /dev/null; then
-    print_error "Python 3 is not installed!"
-    echo "Please install Python 3.8 or higher."
+# Check Docker Compose
+if command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE="docker-compose"
+elif docker compose version &> /dev/null; then
+    DOCKER_COMPOSE="docker compose"
+else
+    print_error "Docker Compose is not available!"
     exit 1
 fi
+print_success "Docker Compose is available"
 
-# Check available memory
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    # macOS
-    DOCKER_MEMORY=$(docker system info --format '{{.MemTotal}}' 2>/dev/null || echo "0")
-    DOCKER_MEMORY_GB=$((DOCKER_MEMORY / 1073741824))
-else
-    # Linux/WSL
-    DOCKER_MEMORY_GB=$(free -g | awk '/^Mem:/{print $2}')
-fi
-
-if [ "$DOCKER_MEMORY_GB" -lt 8 ]; then
-    print_warning "Less than 8GB RAM detected. Using lightweight mode."
-    export LIGHTWEIGHT_MODE=true
-fi
-
-print_success "All prerequisites met!"
-
-# Create necessary directories
-print_status "Creating project directories..."
-mkdir -p data logs dbt_project/logs
-print_success "Directories created"
-
-# Setup environment
-print_status "Setting up environment..."
-if [ ! -f .env ]; then
-    if [ -f .env.example ]; then
-        cp .env.example .env
-        print_success "Environment file created"
-    else
-        print_error ".env.example not found! Creating basic .env file..."
-        cat > .env << 'EOF'
-# Database Configuration
-POSTGRES_DB=saas_platform_dev
-POSTGRES_USER=saas_user
-POSTGRES_PASSWORD=saas_secure_password_2024
-DB_HOST=postgres
-DB_PORT=5432
-
-# Superset Configuration
-SUPERSET_ADMIN_USERNAME=admin
-SUPERSET_ADMIN_PASSWORD=admin_password_2024
-SUPERSET_SECRET_KEY=your_secret_key_here_change_in_production
-
-# Jupyter Configuration
-JUPYTER_TOKEN=saas_ml_token_2024
-
-# Grafana Configuration
-GRAFANA_ADMIN_PASSWORD=grafana_admin_2024
-
-# Airflow Configuration
-AIRFLOW_ADMIN_USERNAME=admin
-AIRFLOW_ADMIN_PASSWORD=admin_password_2024
-AIRFLOW_SECRET_KEY=your_airflow_secret_key_here
-EOF
-        print_success "Basic environment file created"
+# Check Python (for data generation)
+if command -v python3 &> /dev/null; then
+    PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
+    print_success "Python $PYTHON_VERSION is installed"
+    
+    # Install Python dependencies if needed
+    print_status "Checking Python dependencies..."
+    if ! python3 -c "import psycopg2" 2>/dev/null; then
+        print_status "Installing psycopg2-binary..."
+        pip3 install psycopg2-binary || {
+            print_warning "Failed to install psycopg2-binary. Data generation may not work."
+            SKIP_DATA_GEN=true
+        }
     fi
 else
-    print_success "Environment file already exists"
+    print_warning "Python 3 is not installed. Data generation will be skipped."
+    SKIP_DATA_GEN=true
 fi
 
-# Pull Docker images
-print_status "Pulling Docker images (this may take a few minutes)..."
-docker-compose pull
+# Ensure directories exist
+print_status "Ensuring required directories exist..."
+mkdir -p airflow/{dags,logs,plugins}
+mkdir -p dbt_project/{logs,target}
+mkdir -p grafana/provisioning/{dashboards,datasources}
+mkdir -p jupyter/work
+mkdir -p mlflow
+mkdir -p prometheus
+mkdir -p superset
 
-# Build containers
-print_status "Building containers..."
-docker-compose build --quiet
+# Copy enhanced schema to be used
+if [[ -f "database/01_enhanced_schema.sql" ]]; then
+    print_status "Using enhanced schema for better compatibility..."
+    # Backup original if it exists
+    if [[ -f "database/01_schema.sql" ]]; then
+        mv database/01_schema.sql database/01_schema.sql.backup 2>/dev/null || true
+    fi
+    cp database/01_enhanced_schema.sql database/01_schema.sql
+fi
+
+# Set correct permissions
+print_status "Setting permissions..."
+chmod -R 755 airflow superset dbt_project || true
+
+# Pull/Build images
+print_status "Pulling Docker images..."
+$DOCKER_COMPOSE -f $COMPOSE_FILE pull --quiet postgres redis || {
+    print_warning "Failed to pull some images, will retry during startup"
+}
 
 # Start services
-print_status "Starting services..."
-docker-compose up -d
+print_status "Starting services with $COMPOSE_FILE..."
+$DOCKER_COMPOSE -f $COMPOSE_FILE up -d
 
-# Wait for services to be ready
-print_status "Waiting for services to initialize..."
-sleep 30
+# Wait for PostgreSQL to be ready
+print_status "Waiting for PostgreSQL to be ready..."
+MAX_TRIES=30
+TRIES=0
+while ! docker exec saas_platform_postgres pg_isready -U saas_user &> /dev/null; do
+    TRIES=$((TRIES+1))
+    if [ $TRIES -eq $MAX_TRIES ]; then
+        print_error "PostgreSQL failed to start after $MAX_TRIES attempts"
+        echo "Checking logs:"
+        docker logs saas_platform_postgres --tail 20
+        exit 1
+    fi
+    echo -n "."
+    sleep 2
+done
+echo ""
+print_success "PostgreSQL is ready"
 
-# Check service health
-print_status "Checking service health..."
-POSTGRES_HEALTHY=$(docker-compose ps postgres | grep -c "Up" || true)
-SUPERSET_HEALTHY=$(docker-compose ps superset | grep -c "Up" || true)
+# Extra wait for database initialization
+sleep 5
 
-if [ "$POSTGRES_HEALTHY" -eq 0 ]; then
-    print_error "PostgreSQL failed to start!"
-    docker-compose logs postgres
-    exit 1
+# Run data generation if not skipped
+if [[ "$SKIP_DATA_GEN" == false ]] && command -v python3 &> /dev/null; then
+    print_status "Generating educational data (size: $DATA_SIZE)..."
+    
+    # Use the data generation script
+    if [[ -f "scripts/generate_educational_data.py" ]]; then
+        python3 scripts/generate_educational_data.py --size "$DATA_SIZE" || {
+            print_warning "Data generation failed. Trying alternative method..."
+            
+            # Fallback: try with explicit connection
+            python3 scripts/generate_educational_data.py \
+                --host localhost \
+                --port 5432 \
+                --database saas_platform_dev \
+                --user saas_user \
+                --password saas_secure_password_2024 \
+                --size "$DATA_SIZE" || {
+                print_warning "Alternative data generation also failed"
+            }
+        }
+    else
+        print_warning "Data generation script not found"
+    fi
+else
+    print_warning "Skipping data generation"
 fi
 
-if [ "$SUPERSET_HEALTHY" -eq 0 ]; then
-    print_warning "Superset may still be initializing..."
-fi
+# Run dbt
+print_status "Running dbt transformations..."
+docker exec saas_platform_dbt_core bash -c "cd /opt/dbt_project && dbt deps && dbt seed && dbt run" || {
+    print_warning "dbt transformations failed. This is normal on first run if no data exists yet."
+}
 
-print_success "Core services are running"
+# Initialize Superset
+print_status "Initializing Apache Superset..."
+docker exec saas_platform_superset superset db upgrade || print_warning "Superset db upgrade failed"
+docker exec saas_platform_superset superset fab create-admin \
+    --username admin \
+    --firstname Admin \
+    --lastname User \
+    --email admin@example.com \
+    --password admin_password_2024 2>/dev/null || print_warning "Admin user may already exist"
+docker exec saas_platform_superset superset init || print_warning "Superset init failed"
 
-# Install Python dependencies if needed
-print_status "Checking Python dependencies..."
-if ! python3 -c "import psycopg2" 2>/dev/null; then
-    print_status "Installing psycopg2-binary..."
-    pip3 install psycopg2-binary || {
-        print_warning "Failed to install psycopg2-binary. Data generation may not work."
+# Import dashboards if available
+if [[ -f "superset/dashboards/sales/import_sales_dashboard.sql" ]]; then
+    print_status "Importing sample dashboards..."
+    docker exec -i saas_platform_postgres psql -U saas_user -d superset_db < superset/dashboards/sales/import_sales_dashboard.sql 2>/dev/null || {
+        print_warning "Dashboard import failed - this is normal on first run"
     }
 fi
 
-# Load sample data
-print_status "Loading sample data..."
-if command -v python3 &> /dev/null; then
-    # Try the new educational data generator first
-    if [ -f "scripts/generate_educational_data.py" ]; then
-        print_status "Running educational data generator..."
-        python3 scripts/generate_educational_data.py --size small || {
-            print_warning "Educational data generator failed."
-        }
-    # Fall back to original generate_data.py
-    elif [ -f "scripts/generate_data.py" ]; then
-        print_status "Running data generation script..."
-        python3 scripts/generate_data.py --size small || {
-            print_warning "Data generation script failed."
-        }
-    # Try generate_all_data.py as another fallback
-    elif [ -f "scripts/generate_all_data.py" ]; then
-        print_status "Running generate_all_data.py..."
-        cd scripts && python3 generate_all_data.py && cd .. || {
-            print_warning "Alternative data generation also failed."
-        }
-    fi
-    
-    # As last resort, create minimal test data
-    if ! docker-compose exec -T postgres psql -U saas_user -d saas_platform_dev -c "SELECT COUNT(*) FROM raw.app_database_accounts" &>/dev/null; then
-        print_warning "No data loaded yet. Creating minimal test data..."
-        docker-compose exec -T postgres psql -U saas_user -d saas_platform_dev << 'EOF'
--- Ensure raw schema exists
-CREATE SCHEMA IF NOT EXISTS raw;
+# Display summary
+echo ""
+echo "═══════════════════════════════════════════════════════════════"
+echo "                    🎉 Setup Complete! 🎉                      "
+echo "═══════════════════════════════════════════════════════════════"
+echo ""
+echo "📊 Access your services:"
+echo "───────────────────────────────────────────────────────────────"
+echo ""
+echo "📈 ${GREEN}Superset${NC} (Business Intelligence)"
+echo "   URL: http://localhost:8088"
+echo "   Username: admin"
+echo "   Password: admin_password_2024"
+echo ""
+echo "🔬 ${GREEN}Jupyter Lab${NC} (Data Science Notebooks)"
+echo "   URL: http://localhost:8888"
+echo "   Token: saas_ml_token_2024"
+echo ""
+echo "🗄️  ${GREEN}PostgreSQL${NC} (Database)"
+echo "   Host: localhost:5432"
+echo "   Database: saas_platform_dev"
+echo "   Username: saas_user"
+echo "   Password: saas_secure_password_2024"
+echo ""
 
--- Create minimal accounts if table exists
-INSERT INTO raw.app_database_accounts (id, name, created_at, industry, employee_count, annual_revenue)
-SELECT 
-    'test-' || generate_series::text,
-    'Test Company ' || generate_series,
-    NOW() - (random() * interval '365 days'),
-    CASE (random() * 4)::int 
-        WHEN 0 THEN 'Technology'
-        WHEN 1 THEN 'Healthcare'
-        WHEN 2 THEN 'Retail'
-        ELSE 'Manufacturing'
-    END,
-    (random() * 1000 + 10)::int,
-    (random() * 50000000 + 1000000)::bigint
-FROM generate_series(1, 10)
-ON CONFLICT (id) DO NOTHING;
-EOF
-    fi
-else
-    print_warning "Python not available. Platform will start with empty database."
+if [[ "$COMPOSE_FILE" == "docker-compose.full.yml" ]]; then
+    echo "🔄 ${GREEN}Airflow${NC} (Workflow Orchestration)"
+    echo "   URL: http://localhost:8080"
+    echo "   Username: admin"
+    echo "   Password: airflow_admin_2024"
+    echo ""
+    echo "🤖 ${GREEN}MLflow${NC} (ML Experiment Tracking)"
+    echo "   URL: http://localhost:5001"
+    echo ""
+    echo "📊 ${GREEN}Grafana${NC} (System Monitoring)"
+    echo "   URL: http://localhost:3000"
+    echo "   Username: admin"
+    echo "   Password: grafana_admin_2024"
+    echo ""
 fi
 
-# Run dbt models
-print_status "Running dbt transformations..."
-docker exec saas_platform_dbt bash -c "cd /opt/dbt_project && dbt run --profiles-dir ." || {
-    print_warning "dbt run failed. You may need to run it manually later."
-}
-
-# Final checks
-print_status "Performing final checks..."
-echo ""
-
-# Display service URLs
-echo "=================================================="
-echo "🎉 Setup Complete! Your platform is ready."
-echo "=================================================="
-echo ""
-echo "📊 Access your services at:"
-echo ""
-echo "  Apache Superset (BI):    http://localhost:8088"
-echo "  Username: admin"
-echo "  Password: admin_password_2024"
-echo ""
-echo "  Jupyter Lab (notebooks): http://localhost:8888"
-echo "  Token: saas_ml_token_2024"
-echo ""
-echo "  PostgreSQL (database):   localhost:5432"
-echo "  Username: saas_user"
-echo "  Password: saas_secure_password_2024"
-echo ""
-echo "  Grafana (monitoring):    http://localhost:3000"
-echo "  Username: admin"
-echo "  Password: grafana_admin_2024"
-echo ""
-echo "=================================================="
+echo "───────────────────────────────────────────────────────────────"
 echo ""
 echo "📚 Next steps:"
-echo "1. Open Superset and explore the dashboards"
-echo "2. Check out the curriculum in /education"
-echo "3. Try the example queries in Jupyter Lab"
+echo "   1. Visit Superset to explore dashboards"
+echo "   2. Check out the education materials in /edu"
+echo "   3. Try the SQL exercises in Jupyter notebooks"
 echo ""
-echo "Need help? Check SETUP.md or join our Discord!"
-echo ""
-
-# Create a validation script for users to run later
-cat > validate_setup.sh << 'EOF'
-#!/bin/bash
-# Platform validation script
-
-echo "🔍 Validating platform setup..."
+echo "🛠️  Useful commands:"
+echo "   View logs:        $DOCKER_COMPOSE -f $COMPOSE_FILE logs -f [service]"
+echo "   Stop services:    $DOCKER_COMPOSE -f $COMPOSE_FILE down"
+echo "   Restart service:  $DOCKER_COMPOSE -f $COMPOSE_FILE restart [service]"
 echo ""
 
-# Check services
-echo "📦 Docker Services:"
-docker-compose ps --format "table {{.Service}}\t{{.State}}\t{{.Ports}}"
-echo ""
-
-# Check database
-echo "💾 Database Check:"
-docker-compose exec -T postgres psql -U saas_user -d saas_platform_dev -c "
-SELECT 'Schemas' as check_type, count(*) as count 
-FROM information_schema.schemata 
-WHERE schema_name NOT IN ('pg_catalog', 'information_schema')
-UNION ALL
-SELECT 'Tables in raw schema', count(*) 
-FROM information_schema.tables 
-WHERE table_schema = 'raw'
-UNION ALL
-SELECT 'Accounts', count(*) 
-FROM raw.app_database_accounts
-WHERE EXISTS (
-    SELECT 1 FROM information_schema.tables 
-    WHERE table_schema = 'raw' 
-    AND table_name = 'app_database_accounts'
-);" 2>/dev/null || echo "Database check failed - this is normal if tables haven't been created yet"
-echo ""
-
-# Check service endpoints
-echo "🌐 Service Endpoints:"
-echo -n "Superset (http://localhost:8088): "
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8088/health || echo "Not responding"
-
-echo -n "Jupyter (http://localhost:8888): "
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8888 || echo "Not responding"
-
-if docker-compose ps 2>/dev/null | grep -q "grafana.*Up"; then
-    echo -n "Grafana (http://localhost:3000): "
-    curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/api/health || echo "Not responding"
+# Run validation
+if [[ -f "validate_setup.sh" ]]; then
+    print_status "Running validation checks..."
+    ./validate_setup.sh --quiet || {
+        print_warning "Some validation checks failed. This may be normal on first setup."
+    }
 fi
 
+echo "✨ Happy learning!"
 echo ""
-echo "✅ Validation complete!"
-echo ""
-echo "💡 If you see database errors above, try running:"
-echo "   python3 scripts/generate_educational_data.py --size small"
-echo ""
-EOF
-
-chmod +x validate_setup.sh
-
-print_success "Setup script complete!"
-print_success "Run ./validate_setup.sh to check platform health anytime"

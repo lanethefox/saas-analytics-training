@@ -1,0 +1,342 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: saas_platform_postgres
+    environment:
+      POSTGRES_DB: saas_platform_dev
+      POSTGRES_USER: saas_user
+      POSTGRES_PASSWORD: saas_secure_password_2024
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C --auth-host=md5 --auth-local=md5"
+      # Multiple databases for different services
+      POSTGRES_MULTIPLE_DATABASES: saas_platform_dev,superset_db,warp_memory
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database:/docker-entrypoint-initdb.d
+      - ./database/postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./database/pg_hba.conf:/etc/postgresql/pg_hba.conf
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U saas_user -d saas_platform_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - saas_network
+
+  # Redis for Caching and Feature Store
+  redis:
+    image: redis:7-alpine
+    container_name: saas_platform_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    networks:
+      - saas_network
+
+  # MinIO for MLflow Artifacts
+  minio:
+    image: minio/minio:latest
+    container_name: saas_platform_minio
+    environment:
+      MINIO_ROOT_USER: minio_admin
+      MINIO_ROOT_PASSWORD: minio_secure_password_2024
+    ports:
+      - "9001:9000"
+      - "9002:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+    networks:
+      - saas_network
+
+  # dbt for Data Transformation
+  # dbt Core - For running transformations
+  dbt-core:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dbt
+    container_name: saas_platform_dbt_core
+    environment:
+      DBT_PROFILES_DIR: /opt/dbt_project
+      DBT_PROJECT_DIR: /opt/dbt_project
+    volumes:
+      - ./dbt_project:/opt/dbt_project
+      - dbt_logs:/opt/dbt_project/logs
+      - dbt_target:/opt/dbt_project/target
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - saas_network
+    command: bash -c "echo 'dbt-core service ready' && tail -f /dev/null"
+
+  # dbt Docs - For documentation server
+  dbt-docs:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dbt
+    container_name: saas_platform_dbt_docs
+    ports:
+      - "8085:8080"
+    environment:
+      DBT_PROFILES_DIR: /opt/dbt_project
+      DBT_PROJECT_DIR: /opt/dbt_project
+    volumes:
+      - ./dbt_project:/opt/dbt_project
+      - dbt_logs:/opt/dbt_project/logs
+      - dbt_target:/opt/dbt_project/target
+    depends_on:
+      postgres:
+        condition: service_healthy
+      dbt-core:
+        condition: service_started
+    networks:
+      - saas_network
+    command: bash -c "cd /opt/dbt_project && dbt docs generate && cd target && python3 -m http.server 8080"
+
+  # Jupyter Lab for ML Development
+  jupyter:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.jupyter
+    container_name: saas_platform_jupyter
+    environment:
+      JUPYTER_TOKEN: saas_ml_token_2024
+      JUPYTER_ENABLE_LAB: "yes"
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./ml:/home/jovyan/ml
+      - ./dbt_project:/home/jovyan/dbt_project
+      - jupyter_data:/home/jovyan/work
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - saas_network
+
+  # MLflow for Model Tracking
+  mlflow:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.mlflow
+    container_name: saas_platform_mlflow
+    environment:
+      MLFLOW_BACKEND_STORE_URI: postgresql://saas_user:saas_secure_password_2024@postgres:5432/saas_platform_dev
+      MLFLOW_DEFAULT_ARTIFACT_ROOT: s3://mlflow
+      MLFLOW_S3_ENDPOINT_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: minio_admin
+      AWS_SECRET_ACCESS_KEY: minio_secure_password_2024
+    ports:
+      - "5001:5000"
+    volumes:
+      - mlflow_artifacts:/mlflow
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - saas_network
+
+  # Airflow Database Initialization (runs once)
+  airflow-init:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.airflow
+    container_name: saas_platform_airflow_init
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://saas_user:saas_secure_password_2024@postgres/saas_platform_dev
+      AIRFLOW__CORE__FERNET_KEY: "81HqDtbqAywKSOumSha3BhWNOdQ26slT6K0YaZeZyPs="
+      AIRFLOW__WEBSERVER__SECRET_KEY: "your_secret_key_here"
+      AIRFLOW_USERNAME: admin
+      AIRFLOW_PASSWORD: admin_password_2024
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - airflow_logs:/opt/airflow/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["db", "init"]
+    restart: "no"
+    networks:
+      - saas_network
+
+  # Airflow Webserver
+  airflow-webserver:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.airflow
+    container_name: saas_platform_airflow_webserver
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://saas_user:saas_secure_password_2024@postgres/saas_platform_dev
+      AIRFLOW__CORE__FERNET_KEY: "81HqDtbqAywKSOumSha3BhWNOdQ26slT6K0YaZeZyPs="
+      AIRFLOW__WEBSERVER__SECRET_KEY: "your_secret_key_here"
+      AIRFLOW_USERNAME: admin
+      AIRFLOW_PASSWORD: admin_password_2024
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - airflow_logs:/opt/airflow/logs
+      - ./dbt_project:/opt/dbt_project
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    command: ["webserver"]
+    restart: unless-stopped
+    networks:
+      - saas_network
+
+  # Airflow Scheduler
+  airflow-scheduler:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.airflow
+    container_name: saas_platform_airflow_scheduler
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://saas_user:saas_secure_password_2024@postgres/saas_platform_dev
+      AIRFLOW__CORE__FERNET_KEY: "81HqDtbqAywKSOumSha3BhWNOdQ26slT6K0YaZeZyPs="
+      AIRFLOW__WEBSERVER__SECRET_KEY: "your_secret_key_here"
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - airflow_logs:/opt/airflow/logs
+      - ./dbt_project:/opt/dbt_project
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    command: ["scheduler"]
+    restart: unless-stopped
+    networks:
+      - saas_network
+
+  # Grafana for Monitoring and Dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: saas_platform_grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: grafana_admin_2024
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - saas_network
+
+  # Apache Superset for Business Intelligence
+  superset:
+    build:
+      context: ./superset
+      dockerfile: Dockerfile
+    container_name: saas_platform_superset
+    environment:
+      # Database connection
+      DATABASE_DB: superset_db
+      DATABASE_HOST: postgres
+      DATABASE_PASSWORD: superset_secure_password_2024
+      DATABASE_USER: superset_user
+      DATABASE_PORT: 5432
+      DATABASE_DIALECT: postgresql
+      # Superset configuration
+      SUPERSET_ENV: production
+      SUPERSET_LOAD_EXAMPLES: "no"
+      SECRET_KEY: "superset_secret_key_2024_change_in_production"
+      # Redis configuration for caching
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 1
+    ports:
+      - "8088:8088"
+    volumes:
+      - superset_data:/app/superset_home
+      - ./superset:/app/docker
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - saas_network
+
+  # FastAPI ML Model Serving
+  ml-api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.ml-api
+    container_name: saas_platform_ml_api
+    environment:
+      DATABASE_URL: postgresql://saas_user:saas_secure_password_2024@postgres:5432/saas_platform_dev
+      REDIS_URL: redis://redis:6379/0
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./ml:/app/ml
+      - ml_models:/app/models
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      mlflow:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - saas_network
+
+volumes:
+  postgres_data:
+    driver: local
+  dbt_logs:
+    driver: local
+  dbt_target:
+    driver: local
+  jupyter_data:
+    driver: local
+  mlflow_artifacts:
+    driver: local
+  airflow_logs:
+    driver: local
+  redis_data:
+    driver: local
+  minio_data:
+    driver: local
+  grafana_data:
+    driver: local
+  superset_data:
+    driver: local
+  ml_models:
+    driver: local
+
+networks:
+  saas_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
