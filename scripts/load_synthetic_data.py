@@ -25,7 +25,7 @@ DB_CONFIG = {
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'synthetic')
 
 # Table definitions for each source system
-# NOTE: Tables should be created using 00_complete_raw_schema_fixed.sql
+# NOTE: Tables are automatically created by database/01_main_schema.sql on container startup
 # This dict is kept for reference but table creation is skipped
 TABLE_DEFINITIONS = {
     # App Database Tables - use proper source_table naming

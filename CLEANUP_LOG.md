@@ -50,7 +50,7 @@ Removed old artifacts and unnecessary files to streamline the repository.
 - `dbt_project/tests/TEST_COVERAGE_REPORT.md`
 
 ### Old Schema Files (1 file)
-- `database/00_complete_raw_schema.sql` (superseded by enhanced version)
+- `database/00_complete_raw_schema.sql` (superseded by 01_main_schema.sql)
 
 ## Directories Preserved
 These empty directories were kept as they may be needed by services:

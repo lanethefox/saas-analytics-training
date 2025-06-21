@@ -86,7 +86,7 @@ run_xs_scale() {
     time python3 generate_synthetic_data.py --scale xs --months 60
     
     print_step "Step 2: Creating database schema..."
-    psql -d saas_platform_dev -f ../database/00_complete_raw_schema.sql
+    psql -d saas_platform_dev -f ../database/01_main_schema.sql
     
     print_step "Step 3: Loading data into PostgreSQL..."
     time python3 load_synthetic_data.py
@@ -111,7 +111,7 @@ run_small_scale() {
     time python3 generate_synthetic_data.py --scale small --months 60
     
     print_step "Step 2: Creating database schema..."
-    psql -d saas_platform_dev -f ../database/00_complete_raw_schema.sql
+    psql -d saas_platform_dev -f ../database/01_main_schema.sql
     
     print_step "Step 3: Loading data into PostgreSQL..."
     time python3 load_synthetic_data.py
@@ -144,7 +144,7 @@ run_enterprise_scale() {
     time python3 generate_synthetic_data.py --scale enterprise --months 60
     
     print_step "Step 2: Creating database schema (if not exists)..."
-    psql -d saas_platform_dev -f ../database/00_complete_raw_schema.sql
+    psql -d saas_platform_dev -f ../database/01_main_schema.sql
     
     print_step "Step 3: Loading data with optimized parallel pipeline..."
     time python3 load_synthetic_data_optimized.py

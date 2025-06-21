@@ -46,7 +46,7 @@ This release dramatically simplifies the platform setup by focusing on core serv
 - MinIO (object storage)
 
 ## 🔧 Technical Changes
-1. Enhanced schema (`database/01_enhanced_schema.sql`) includes all expected columns
+1. Enhanced schema (`database/01_main_schema.sql`) includes all expected columns
 2. Separate compose files: `docker-compose.yml` (core) and `docker-compose.full.yml`
 3. Fixed Jupyter permissions with explicit user setting
 4. Automatic creation of `superset_db` database

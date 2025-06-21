@@ -27,19 +27,19 @@ This directory contains PostgreSQL schema definitions and sample data generation
    docker-compose up -d postgres
    ```
 
-2. **Initialize schema:**
-   ```bash
-   docker-compose exec postgres psql -U saas_user -d saas_platform_dev -f /docker-entrypoint-initdb.d/01_schema.sql
-   ```
-
+2. **Schema initialization is automatic:**
+   - Docker automatically runs all SQL files in alphabetical order
+   - `01_main_schema.sql` creates the database and tables
+   - `02_superset_init.sql` sets up Superset
+   
 3. **Generate sample data:**
    ```bash
-   docker-compose exec postgres psql -U saas_user -d saas_platform_dev -f /docker-entrypoint-initdb.d/02_sample_data.sql
+   python3 scripts/generate_educational_data.py --size medium
    ```
 
 4. **Verify setup:**
    ```bash
-   docker-compose exec postgres psql -U saas_user -d saas_platform_dev -c "SELECT COUNT(*) FROM accounts;"
+   docker-compose exec postgres psql -U saas_user -d saas_platform_dev -c "SELECT COUNT(*) FROM raw.app_database_accounts;"
    ```
 
 ## Data Volume

@@ -30,16 +30,15 @@ The `raw` schema contains tables prefixed by their source system:
 
 1. **Data Generation**: The data generation scripts populate the `raw.app_database_*` tables
 2. **dbt Sources**: dbt reads from the `raw` schema tables
-3. **Schema Creation**: The `00_complete_raw_schema.sql` file creates all necessary raw tables
-4. **Legacy File**: The `01_schema.sql` file is legacy and not used in the current setup
+3. **Schema Creation**: The `01_main_schema.sql` file creates all necessary databases and tables
+4. **Execution Order**: Database files run in alphabetical order on container initialization
 
-## File Purposes
+## Database Initialization Files
 
-- `00_complete_raw_schema.sql` - Creates the raw schema and all source tables (ACTIVE)
-- `00_complete_raw_schema_fixed.sql` - Fixed version with proper constraints (ACTIVE)
-- `01_schema.sql` - Legacy schema file, kept for reference only (NOT USED)
-- `00_init_superset.sql` - Initializes Superset metadata database
-- `02-init-warp-memory.sql` - Initializes memory database for caching
+- `00_README.md` - Explains the database file structure and execution order
+- `01_main_schema.sql` - Creates main database, raw schema, and all application tables (PRIMARY)
+- `02_superset_init.sql` - Initializes Superset database and users
+- `99_optional_warp_memory.sql` - Optional vector database for memory/embedding features
 
 ## Data Flow
 
@@ -51,6 +50,7 @@ External Systems → Raw Schema → dbt Models → Analytics Tables → Dashboar
 ## For New Deployments
 
 1. Docker automatically runs SQL files in alphabetical order from `/docker-entrypoint-initdb.d`
-2. The `00_complete_raw_schema.sql` creates all necessary tables
-3. Data generators populate `raw.app_database_*` tables
-4. dbt transforms raw data into analytics-ready models
+2. The `01_main_schema.sql` creates databases and all necessary tables
+3. The `02_superset_init.sql` sets up Superset database and permissions
+4. Data generators populate `raw.app_database_*` tables
+5. dbt transforms raw data into analytics-ready models

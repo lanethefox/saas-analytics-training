@@ -137,15 +137,8 @@ mkdir -p mlflow
 mkdir -p prometheus
 mkdir -p superset
 
-# Copy enhanced schema to be used
-if [[ -f "database/01_enhanced_schema.sql" ]]; then
-    print_status "Using enhanced schema for better compatibility..."
-    # Backup original if it exists
-    if [[ -f "database/01_schema.sql" ]]; then
-        mv database/01_schema.sql database/01_schema.sql.backup 2>/dev/null || true
-    fi
-    cp database/01_enhanced_schema.sql database/01_schema.sql
-fi
+# Schema files are now properly named and will be executed in order by Docker
+# No need to copy or rename - Docker postgres init handles this automatically
 
 # Set correct permissions
 print_status "Setting permissions..."
