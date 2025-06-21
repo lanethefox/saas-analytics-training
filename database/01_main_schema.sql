@@ -9,12 +9,11 @@
 -- =====================================================
 -- CREATE DATABASES
 -- =====================================================
--- Ensure both main and superset databases exist
-CREATE DATABASE IF NOT EXISTS saas_platform_dev;
-CREATE DATABASE IF NOT EXISTS superset_db;
+-- Note: CREATE DATABASE IF NOT EXISTS is not supported in PostgreSQL
+-- The saas_platform_dev database is created by Docker environment
+-- This script runs in the context of that database
 
--- Switch to main database
-\c saas_platform_dev;
+-- Create superset database if needed (handled by separate init script)
 
 -- Enable required extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

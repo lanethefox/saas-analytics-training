@@ -1,4 +1,20 @@
 -- Initialize pgvector extension for warp memory database
+-- This is optional - only run if warp_memory database exists
+-- To enable: CREATE DATABASE warp_memory; then run this script
+
+-- Check if database exists before connecting
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_database WHERE datname = 'warp_memory') THEN
+        -- Database exists, safe to connect
+        NULL;
+    ELSE
+        RAISE NOTICE 'warp_memory database does not exist. Skipping warp memory initialization.';
+        RAISE EXCEPTION 'Skipping script execution';
+    END IF;
+END
+$$;
+
 \c warp_memory;
 
 -- Create the vector extension
