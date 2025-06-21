@@ -47,14 +47,27 @@ The setup script will:
 
 ### 3. Verify Installation
 ```bash
-# Check all services are running
-docker-compose ps
-
-# Test the database connection
-docker-compose exec postgres psql -U saas_user -d saas_platform_dev -c "SELECT COUNT(*) FROM raw.app_database_accounts;"
+# Run the validation script
+./validate_setup.sh
 ```
 
-### 4. Access the Platform
+This will check:
+- Docker services status
+- Database connectivity
+- Schema and table creation
+- Service endpoints
+
+### 4. Troubleshooting
+
+If you encounter any issues during setup, see our comprehensive [Troubleshooting Guide](TROUBLESHOOTING.md) which covers:
+- Data generation failures
+- Database connection issues
+- Python dependency problems
+- Docker memory issues
+- Port conflicts
+- Quick fixes and resets
+
+### 5. Access the Platform
 
 | Service | URL | Credentials |
 |---------|-----|-------------|
@@ -91,10 +104,11 @@ sleep 30
 
 ### 4. Initialize the Database
 ```bash
-# Load schema
-docker-compose exec postgres psql -U saas_user -d saas_platform_dev -f /docker-entrypoint-initdb.d/01_init_schema.sql
+# The database schema is automatically created by Docker
+# Just generate sample data:
+python3 scripts/generate_educational_data.py --size small
 
-# Generate sample data
+# Or use the original generator:
 python3 scripts/generate_data.py --size small
 ```
 
