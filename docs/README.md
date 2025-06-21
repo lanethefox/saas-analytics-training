@@ -1,64 +1,61 @@
-# Documentation Index
+# Platform Documentation
 
-This directory contains all platform documentation, including technical specs, onboarding materials, and development guides.
+Welcome to the technical documentation for the B2B SaaS Analytics Training Platform.
 
 ## 📚 Documentation Structure
 
-### 🆕 Onboarding Materials
-- **[Complete Onboarding Guide](onboarding/)** - Start here for new team members
-  - [Interactive SQL Tutorial](onboarding/common/interactive-sql-tutorial.md) - Hands-on SQL exercises
-  - [Metric Lineage Documentation](onboarding/common/metric-lineage.md) - Trace metrics from source to dashboard
-  - [Automated Onboarding Script](/scripts/onboarding_automation.py) - Verify your setup
+### Getting Started
+- [Setup Guide](SETUP.md) - Install and configure the platform
+- [Quick Start](QUICK_START.md) - Get running in minutes
+- [Troubleshooting](TROUBLESHOOTING.md) - Common issues and solutions
 
-### 📊 Platform Documentation
-- **[Entity Quick Start](ENTITY_QUICK_START.md)** - Understanding our data model
-- **[Entity Tables Documentation](entity_tables_documentation.md)** - Detailed table schemas
-- **[Cross-Domain Best Practices](CROSS_DOMAIN_INTERACTIONS_AND_BEST_PRACTICES.md)** - Working across teams
+### Architecture & Data Model
+- [Entity Data Model](core_entity_data_model.md) - Core entity-centric architecture
+- [Data Model Documentation](data_model_documentation.md) - Detailed table documentation
+- [Entity Relationships](entity_relationship_diagram.md) - Visual ERD and relationships
+- [Entity Summary](entity_summary_table.md) - Quick reference for all entities
+- [Schema Explanation](SCHEMA_EXPLANATION.md) - Database schema architecture
 
-### 🎓 Educational Materials
-- **[Business Analytics Training](business-analytics-training/)** - Comprehensive training modules
-- **[Education Hub](/education/)** - Curriculum, projects, and simulations
+### Analytics & Metrics
+- [Metrics Layer Guide](METRICS_LAYER_GUIDE.md) - Unified metrics layer
+- [Business Analytics Guide](business_analytics_guide.md) - Analytics best practices
+- [Entity Quick Start](ENTITY_QUICK_START.md) - Working with entity models
 
-### 🛠️ Technical Guides
-- **[Airflow Setup](airflow_setup.md)** - Orchestration configuration
-- **[Database Schema Report](DATABASE_SCHEMA_PARITY_REPORT.md)** - Schema documentation
+### Platform Services
+- [Superset Setup Guide](SUPERSET_SETUP_GUIDE.md) - Business intelligence setup
+- [Superset Manual Setup](SUPERSET_MANUAL_SETUP.md) - Step-by-step configuration
+- [Superset Quick Reference](SUPERSET_QUICK_REFERENCE.md) - Common tasks
+- [Airflow Setup](airflow_setup.md) - Orchestration configuration
 
-### 📦 Development & Deployment
-- **[Educational Release Plan](EDUCATIONAL_RELEASE_PLAN.md)** - Platform packaging for education
-- **[Packaging Tasks](PACKAGING_TASKS.md)** - Release preparation checklist
-- **[Immediate Actions](IMMEDIATE_ACTIONS.md)** - Quick start for deployment
+### Cross-Domain Knowledge
+- [Cross-Domain Interactions](CROSS_DOMAIN_INTERACTIONS_AND_BEST_PRACTICES.md) - How domains work together
 
-## 🚀 Quick Navigation
+## 🔍 Quick Links
 
-### By Role
-- **Sales Analyst**: [Sales Onboarding](onboarding/sales/)
-- **Customer Success**: [CS Onboarding](onboarding/customer-experience/)
-- **Marketing Analyst**: [Marketing Onboarding](onboarding/marketing/)
-- **Product Analyst**: [Product Onboarding](onboarding/product/)
+**New to the platform?** Start with the [Setup Guide](SETUP.md)
 
-### By Learning Style
-- **Hands-On Learner**: Start with [Interactive SQL Tutorial](onboarding/common/interactive-sql-tutorial.md)
-- **Visual Learner**: Review [Metric Lineage](onboarding/common/metric-lineage.md) diagrams
-- **Systematic Learner**: Follow [Business Analytics Training](business-analytics-training/) modules
+**Want to understand the data?** Read the [Entity Data Model](core_entity_data_model.md)
 
-### By Experience Level
-- **Beginner**: [Data Literacy Prerequisites](/education/common_resources/data_literacy_prerequisites.md)
-- **Intermediate**: [Workday Simulations](/education/workday-simulations/)
-- **Advanced**: [Quarterly Projects](/education/quarterly-projects/)
+**Looking for metrics?** Check the [Metrics Layer Guide](METRICS_LAYER_GUIDE.md)
 
-## 📖 Using This Documentation
+**Need help?** See [Troubleshooting](TROUBLESHOOTING.md)
 
-1. **New Users**: Start with the [Onboarding Guide](onboarding/README.md)
-2. **Students**: Head to the [Education Hub](/education/)
-3. **Developers**: Check technical guides and schema documentation
-4. **Instructors**: Review curriculum and instructor guides
+## 📊 Platform Overview
 
-## 🔍 Search Tips
+This platform simulates a complete B2B SaaS analytics environment for a bar/restaurant IoT management system called TapFlow Analytics.
 
-- Use `grep -r "search term" .` to search all docs
-- Check file names for topic-specific guides
-- Look for README.md files in each subdirectory
+### Tech Stack
+- **Database**: PostgreSQL with raw → transformed architecture
+- **Transformation**: dbt for data modeling
+- **Orchestration**: Apache Airflow for scheduling
+- **Visualization**: Apache Superset for dashboards
+- **ML Platform**: MLflow, Feast, and custom models
+- **Monitoring**: Grafana for system metrics
 
----
+### Data Architecture
+```
+External Systems → Raw Schema → dbt Models → Entity Models → Analytics
+                    (raw.*)      (staging)    (7 entities)   (dashboards)
+```
 
-*Need help? Can't find what you're looking for? Check the main [README.md](../README.md) or ask in our Discord community.*
+See [Schema Explanation](SCHEMA_EXPLANATION.md) for detailed architecture.

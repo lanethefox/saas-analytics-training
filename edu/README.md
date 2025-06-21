@@ -1,28 +1,35 @@
-# 🎓 B2B SaaS Analytics Education Hub
+# 🎓 Analytics Education Hub
 
-Welcome to the comprehensive education materials for the B2B SaaS Analytics Platform. This directory contains all curriculum, simulations, and projects for learning real-world analytics.
+Welcome to the comprehensive education materials for learning B2B SaaS analytics. This hub contains curriculum, hands-on exercises, real-world simulations, and projects designed to take you from beginner to job-ready analyst.
 
-## 📚 Quick Links
+## 🎯 Learning Paths
 
-### Core Learning Path
-1. **[Curriculum Overview](curriculum_overview.md)** - Start here for program structure and objectives
-2. **[Interactive SQL Tutorial](/docs/onboarding/common/interactive-sql-tutorial.md)** - Hands-on SQL practice
-3. **[Metric Lineage Guide](/docs/onboarding/common/metric-lineage.md)** - Understand metric calculations
+### 📖 Start Here
+1. **[Curriculum Overview](curriculum_overview.md)** - Complete 16-week program structure
+2. **[Prerequisites](common_resources/data_literacy_prerequisites.md)** - What you need to know
+3. **[SQL Fundamentals](common_resources/sql_fundamentals_reference.md)** - Essential SQL skills
 
-### Practical Exercises
-- **[Workday Simulations](workday-simulations/)** - Day-in-the-life scenarios for each analyst role
-- **[Quarterly Projects](quarterly-projects/)** - Long-term projects aligned with business OKRs
+### 🚀 Core Learning Modules
+1. **[Analytics Engineering](analytics_engineering/)** - Build the data foundation
+2. **[Sales Analytics](sales/)** - Pipeline analysis and forecasting
+3. **[Customer Success](customer_success/)** - Retention and health metrics
+4. **[Marketing Analytics](marketing/)** - Attribution and ROI
+5. **[Product Analytics](product_analytics/)** - Usage and adoption
 
-### Domain-Specific Learning
-- **[Analytics Engineering](analytics_engineering/)** - Entity models, incremental processing, metrics governance
-- **[Sales Analytics](sales/)** - Pipeline optimization, forecasting, territory planning
-- **[Customer Success](customer_success/)** - Churn prediction, health scoring, retention
-- **[Marketing Analytics](marketing/)** - Attribution, CAC, campaign ROI
-- **[Product Analytics](product_analytics/)** - Feature adoption, user behavior, engagement
+### 💼 Practical Experience
+- **[Workday Simulations](workday-simulations/)** - Experience a day in the life
+- **[Quarterly Projects](quarterly-projects/)** - Real 12-week analyst projects
+- **[SQL Examples](examples/)** - Query patterns and solutions
+- **[Business Training](business-analytics-training/)** - Domain knowledge
+- **[Onboarding Exercises](onboarding/)** - Interactive tutorials
 
-### Resources
-- **[Common Resources](common_resources/)** - SQL reference, statistics primer, best practices
+### 👩‍🏫 For Instructors
 - **[Instructor Guides](instructor_guides/)** - Teaching materials and answer keys
+- **[Workbook & Answers](Business_Analytics_Training_Workbook.md)** - Complete assessment materials
+
+### 📚 Resources
+- **[Common Resources](common_resources/)** - References and best practices
+- **[Learning Modules](learning_modules/)** - Structured lessons
 
 ## 🚀 Getting Started
 

@@ -18,6 +18,21 @@ logs/
 /airflow/logs/
 /dbt_project/logs/
 
+# Artifacts and temporary files
+*_SUMMARY.md
+*_REPORT.md
+*_TODO.md
+*_PROGRESS.md
+*_STATUS.md
+*_SIGNOFF.json
+validation_*.json
+model_validation_*.json
+*.tar.gz
+*.zip
+data_backup*
+metrics_layer_backup*
+mcp-server.log
+
 # Python
 __pycache__/
 *.py[cod]
