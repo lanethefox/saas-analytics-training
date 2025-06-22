@@ -13,7 +13,7 @@ This guide will help you set up the B2B SaaS Analytics Platform on your machine.
 - **Git**: For cloning the repository
 
 ### System Requirements
-- 8GB RAM minimum (16GB recommended)
+- 4GB RAM minimum for core services (8GB for full stack)
 - 20GB free disk space
 - Modern CPU (2+ cores)
 - Stable internet connection for initial setup
@@ -27,12 +27,24 @@ cd data-platform
 ```
 
 ### 2. Run the Setup Script
+
+**Linux/macOS:**
 ```bash
 # Make the script executable
 chmod +x setup.sh
 
 # Run the setup
 ./setup.sh
+```
+
+**Windows (Command Prompt):**
+```batch
+setup.bat
+```
+
+**Windows (PowerShell):**
+```powershell
+.\setup.ps1
 ```
 
 The setup script will:

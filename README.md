@@ -81,12 +81,32 @@ Technical documentation for the platform:
    ```
 
 2. **Run the setup script**
+   
+   **Linux/macOS:**
    ```bash
    # Core services (recommended)
    ./setup.sh
    
    # Or full stack with all services
    ./setup.sh --full
+   ```
+   
+   **Windows (Command Prompt):**
+   ```batch
+   # Core services (recommended)
+   setup.bat
+   
+   # Or full stack with all services
+   setup.bat --full
+   ```
+   
+   **Windows (PowerShell):**
+   ```powershell
+   # Core services (recommended)
+   .\setup.ps1
+   
+   # Or full stack with all services
+   .\setup.ps1 -Full
    ```
    This will:
    - Start services (PostgreSQL, Redis, dbt, Superset, Jupyter)

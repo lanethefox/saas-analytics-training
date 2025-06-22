@@ -60,8 +60,11 @@ data-platform/
 - Docker Desktop installed and running
 - 4GB RAM available (8GB for full stack)
 - Python 3.8+ (for local development)
+- Windows users: PowerShell or Command Prompt
 
 ### Quick Start
+
+#### Linux/macOS
 ```bash
 # Clone repository
 git clone <repository-url>
@@ -74,6 +77,36 @@ cd data-platform
 ./setup.sh --full              # All services
 ./setup.sh --size large        # More data
 ./setup.sh --skip-data         # No data generation
+```
+
+#### Windows (Command Prompt)
+```batch
+# Clone repository
+git clone <repository-url>
+cd data-platform
+
+# Run setup (core services + small dataset)
+setup.bat
+
+# Or with options:
+setup.bat --full              # All services
+setup.bat --size large        # More data
+setup.bat --skip-data         # No data generation
+```
+
+#### Windows (PowerShell)
+```powershell
+# Clone repository
+git clone <repository-url>
+cd data-platform
+
+# Run setup (core services + small dataset)
+.\setup.ps1
+
+# Or with options:
+.\setup.ps1 -Full              # All services
+.\setup.ps1 -Size large        # More data
+.\setup.ps1 -SkipData          # No data generation
 ```
 
 ### Manual Setup

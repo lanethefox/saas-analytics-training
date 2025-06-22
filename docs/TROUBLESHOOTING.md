@@ -70,8 +70,14 @@
 
 2. **Use virtual environment:**
    ```bash
+   # Linux/macOS
    python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   source venv/bin/activate
+   pip install psycopg2-binary
+   
+   # Windows
+   python -m venv venv
+   venv\Scripts\activate
    pip install psycopg2-binary
    ```
 
@@ -189,6 +195,41 @@ docker-compose logs -f postgres
 docker-compose logs -f dbt
 docker-compose logs -f superset
 ```
+
+### 8. Windows-Specific Issues
+
+**Symptoms:**
+- "setup.sh: command not found"
+- Permission denied errors
+- Line ending issues (CRLF vs LF)
+
+**Solutions:**
+
+1. **Use Windows setup scripts:**
+   ```batch
+   # Command Prompt
+   setup.bat
+   
+   # PowerShell
+   .\setup.ps1
+   ```
+
+2. **Enable script execution in PowerShell:**
+   ```powershell
+   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+   ```
+
+3. **Fix line endings if using WSL:**
+   ```bash
+   dos2unix setup.sh
+   chmod +x setup.sh
+   ./setup.sh
+   ```
+
+4. **Docker Desktop settings:**
+   - Ensure WSL2 is enabled
+   - Allocate at least 4GB RAM
+   - Check "Use the WSL 2 based engine" in settings
 
 ## Schema Reference
 
