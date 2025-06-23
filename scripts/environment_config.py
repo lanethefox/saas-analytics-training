@@ -185,12 +185,68 @@ ENVIRONMENTS = {
         attribution_touchpoints=3_000_000,
         marketing_qualified_leads=80_000,
         google_analytics_sessions=6_000_000
+    ),
+    
+    'LARGE': EnvironmentConfig(
+        name='LARGE',
+        # Core entities
+        accounts=100_000,
+        locations=150_000,   # ~1.5 per account
+        users=300_000,       # ~3 per account
+        devices=450_000,     # ~3 per location
+        subscriptions=125_000,
+        
+        # Event data
+        tap_events=500_000_000,  # ~1.1K per device
+        user_sessions=25_000_000,
+        page_views=125_000_000,
+        feature_usage_events=75_000_000,
+        
+        # Stripe billing
+        stripe_customers=100_000,
+        stripe_subscriptions=125_000,
+        stripe_subscription_items=175_000,
+        stripe_invoices=1_500_000,
+        stripe_charges=1_425_000,
+        stripe_events=10_000_000,
+        
+        # HubSpot CRM
+        hubspot_companies=125_000,
+        hubspot_contacts=500_000,
+        hubspot_deals=250_000,
+        hubspot_engagements=2_500_000,
+        hubspot_tickets=400_000,
+        
+        # Marketing
+        campaigns=12_500,
+        campaign_performance_records=3_750_000,
+        attribution_touchpoints=7_500_000,
+        marketing_qualified_leads=200_000,
+        google_analytics_sessions=15_000_000
     )
+}
+
+# Scale name mappings
+SCALE_MAPPING = {
+    'xs': 'DEV',
+    'small': 'QA',
+    'medium': 'PRODUCTION',
+    'large': 'LARGE',
+    # Also support direct environment names
+    'dev': 'DEV',
+    'qa': 'QA',
+    'production': 'PRODUCTION'
 }
 
 def get_environment_config():
     """Get the configuration for the current environment"""
-    env_name = env.str('DATAGEN_ENV', default='DEV').upper()
+    env_name = env.str('DATAGEN_ENV', default='DEV')
+    
+    # Check if it's a scale name first
+    if env_name.lower() in SCALE_MAPPING:
+        env_name = SCALE_MAPPING[env_name.lower()]
+    else:
+        env_name = env_name.upper()
     
     if env_name not in ENVIRONMENTS:
         print(f"⚠️  Warning: Unknown environment '{env_name}', defaulting to DEV")

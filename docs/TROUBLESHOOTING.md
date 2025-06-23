@@ -28,7 +28,7 @@
 
 4. **Run the educational data generator:**
    ```bash
-   python3 scripts/generate_educational_data.py --size small
+   python3 scripts/generate_all_data.py --scale small
    ```
 
 ### 2. Database Connection Refused
@@ -91,7 +91,7 @@
 
 1. **Ensure data is loaded first:**
    ```bash
-   python3 scripts/generate_educational_data.py --size small
+   python3 scripts/generate_all_data.py --scale small
    ```
 
 2. **Run dbt with debug info:**
@@ -159,7 +159,7 @@
 
 3. **Update connection strings:**
    ```bash
-   python3 scripts/generate_educational_data.py --port 5433
+   python3 scripts/generate_all_data.py --port 5433
    ```
 
 ## Quick Fixes
@@ -175,7 +175,7 @@ rm -rf data logs
 ### Reload Data Only
 ```bash
 # Keep services running, just reload data
-python3 scripts/generate_educational_data.py --size small
+python3 scripts/generate_all_data.py --scale small
 docker-compose exec dbt bash -c "cd /opt/dbt_project && dbt run --profiles-dir ."
 ```
 

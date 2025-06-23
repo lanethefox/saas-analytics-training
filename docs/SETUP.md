@@ -118,10 +118,10 @@ sleep 30
 ```bash
 # The database schema is automatically created by Docker
 # Just generate sample data:
-python3 scripts/generate_educational_data.py --size small
+python3 scripts/generate_all_data.py --scale small
 
 # Or use the original generator:
-python3 scripts/generate_data.py --size small
+python3 scripts/generate_data.py --scale small
 ```
 
 ### 5. Run dbt Models
@@ -134,17 +134,17 @@ docker exec saas_platform_dbt bash -c "cd /opt/dbt_project && dbt run --profiles
 The platform supports multiple data sizes for different use cases:
 
 ```bash
-# Tiny dataset (100 accounts) - Quick demos
-python3 scripts/generate_data.py --size tiny
+# XS dataset (100 accounts) - Quick demos
+python3 scripts/generate_data.py --scale xs
 
 # Small dataset (1,000 accounts) - Default, exercises
-python3 scripts/generate_data.py --size small
+python3 scripts/generate_data.py --scale small
 
 # Medium dataset (10,000 accounts) - Projects
-python3 scripts/generate_data.py --size medium
+python3 scripts/generate_data.py --scale medium
 
 # Large dataset (40,000 accounts) - Full platform
-python3 scripts/generate_data.py --size large
+python3 scripts/generate_data.py --scale large
 ```
 
 ## Common Issues

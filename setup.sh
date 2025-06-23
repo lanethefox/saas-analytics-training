@@ -177,23 +177,12 @@ sleep 5
 
 # Run data generation if not skipped
 if [[ "$SKIP_DATA_GEN" == false ]] && command -v python3 &> /dev/null; then
-    print_status "Generating educational data (size: $DATA_SIZE)..."
+    print_status "Generating complete dataset (scale: $DATA_SIZE)..."
     
-    # Use the data generation script
-    if [[ -f "scripts/generate_educational_data.py" ]]; then
-        python3 scripts/generate_educational_data.py --size "$DATA_SIZE" || {
-            print_warning "Data generation failed. Trying alternative method..."
-            
-            # Fallback: try with explicit connection
-            python3 scripts/generate_educational_data.py \
-                --host localhost \
-                --port 5432 \
-                --database saas_platform_dev \
-                --user saas_user \
-                --password saas_secure_password_2024 \
-                --size "$DATA_SIZE" || {
-                print_warning "Alternative data generation also failed"
-            }
+    # Use the unified data generation script
+    if [[ -f "scripts/generate_all_data.py" ]]; then
+        python3 scripts/generate_all_data.py --scale "$DATA_SIZE" || {
+            print_warning "Data generation failed. Check logs for details."
         }
     else
         print_warning "Data generation script not found"

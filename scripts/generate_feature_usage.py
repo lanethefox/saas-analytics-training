@@ -209,7 +209,10 @@ def main():
     print(f"\nFeature Usage Statistics:")
     print(f"  - Unique Users: {unique_users:,}")
     print(f"  - Unique Features: {unique_features}")
-    print(f"  - Events per User: {len(events) / unique_users:.1f}")
+    if unique_users > 0:
+        print(f"  - Events per User: {len(events) / unique_users:.1f}")
+    else:
+        print(f"  - Events per User: 0")
     
     # Top features
     feature_counts = {}
@@ -226,7 +229,10 @@ def main():
     total_usage = sum(e['usage_count'] for e in events)
     print(f"\nUsage Intensity:")
     print(f"  - Total Usage Count: {total_usage:,}")
-    print(f"  - Average Usage per Event: {total_usage / len(events):.1f}")
+    if len(events) > 0:
+        print(f"  - Average Usage per Event: {total_usage / len(events):.1f}")
+    else:
+        print(f"  - Average Usage per Event: 0")
     
     # Insert into database
     print("\nInserting into database...")

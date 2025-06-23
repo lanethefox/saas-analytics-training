@@ -34,7 +34,7 @@ This directory contains PostgreSQL schema definitions and sample data generation
    
 3. **Generate sample data:**
    ```bash
-   python3 scripts/generate_educational_data.py --size medium
+   python3 scripts/generate_all_data.py --scale medium
    ```
 
 4. **Verify setup:**

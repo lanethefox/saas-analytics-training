@@ -51,7 +51,13 @@ def generate_hubspot_deals(env_config):
     
     # Create deals for customers (historical won deals)
     customer_companies = [c for c in companies if c['lifecycle_stage'] == 'customer']
-    for company in customer_companies:
+    # Sample 200 customers for initial deals (leaving room for prospects and expansion)
+    sampled_customers = fake.random_elements(
+        elements=customer_companies,
+        length=min(200, len(customer_companies)),
+        unique=True
+    )
+    for company in sampled_customers:
         deal_id = str(uuid.uuid4())
         
         # Get primary contact for this company
@@ -196,12 +202,15 @@ def generate_hubspot_deals(env_config):
         deals.append(deal)
     
     # Create expansion deals for existing customers (upsell/cross-sell)
-    num_expansion_deals = 250 - len(deals)  # Fill to 250 total
-    expansion_customers = fake.random_elements(
-        elements=customer_companies,
-        length=min(num_expansion_deals, len(customer_companies)),
-        unique=True
-    )
+    num_expansion_deals = max(0, 250 - len(deals))  # Fill to 250 total
+    if num_expansion_deals > 0:
+        expansion_customers = fake.random_elements(
+            elements=customer_companies,
+            length=min(num_expansion_deals, len(customer_companies)),
+            unique=True
+        )
+    else:
+        expansion_customers = []
     
     for company in expansion_customers:
         if len(deals) >= 250:

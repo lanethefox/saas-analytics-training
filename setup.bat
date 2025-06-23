@@ -102,7 +102,7 @@ if "%SKIP_DATA%"=="false" (
     pip install -r requirements.txt >nul 2>&1
     
     REM Run data generation
-    python scripts/generate_educational_data.py --size %SIZE%
+    python scripts/generate_all_data.py --scale %SIZE%
     if errorlevel 1 (
         echo ERROR: Data generation failed!
         pause

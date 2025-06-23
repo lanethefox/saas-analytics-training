@@ -48,7 +48,7 @@ data-platform/
 │   ├── projects/           # Quarterly projects
 │   └── workday_sims/       # Day-in-life simulations
 ├── scripts/                # Data generation and utilities
-│   └── generate_educational_data.py  # Main data generator
+│   └── generate_all_data.py  # Main data generator
 ├── docker-compose.yml      # Core services configuration
 ├── docker-compose.full.yml # Full stack configuration
 └── setup.sh               # One-click setup script
@@ -75,7 +75,7 @@ cd data-platform
 
 # Or with options:
 ./setup.sh --full              # All services
-./setup.sh --size large        # More data
+./setup.sh --scale large        # More data
 ./setup.sh --skip-data         # No data generation
 ```
 
@@ -90,7 +90,7 @@ setup.bat
 
 # Or with options:
 setup.bat --full              # All services
-setup.bat --size large        # More data
+setup.bat --scale large        # More data
 setup.bat --skip-data         # No data generation
 ```
 
@@ -105,7 +105,7 @@ cd data-platform
 
 # Or with options:
 .\setup.ps1 -Full              # All services
-.\setup.ps1 -Size large        # More data
+.\setup.ps1 -Scale large        # More data
 .\setup.ps1 -SkipData          # No data generation
 ```
 
@@ -118,7 +118,7 @@ docker-compose up -d
 docker-compose exec postgres pg_isready
 
 # 3. Generate data
-python scripts/generate_educational_data.py --size small
+python scripts/generate_all_data.py --scale small
 
 # 4. Run dbt transformations
 docker-compose exec dbt-core bash -c 'cd /opt/dbt_project && dbt run'
@@ -129,10 +129,10 @@ docker-compose exec dbt-core bash -c 'cd /opt/dbt_project && dbt run'
 ### Data Generation
 ```bash
 # Generate different dataset sizes
-python scripts/generate_educational_data.py --size xs      # 100 accounts
-python scripts/generate_educational_data.py --size small   # 1,000 accounts
-python scripts/generate_educational_data.py --size medium  # 10,000 accounts
-python scripts/generate_educational_data.py --size large   # 40,000 accounts
+python scripts/generate_all_data.py --scale xs      # 100 accounts
+python scripts/generate_all_data.py --scale small   # 1,000 accounts
+python scripts/generate_all_data.py --scale medium  # 10,000 accounts
+python scripts/generate_all_data.py --scale large   # 40,000 accounts
 ```
 
 ### Database Access
@@ -278,7 +278,7 @@ docker exec -e PGPASSWORD=saas_secure_password_2024 saas_platform_postgres \
 
 ### Adding New Data Sources
 1. Create table in `database/01_main_schema.sql`
-2. Add generation logic to `scripts/generate_educational_data.py`
+2. Add generation logic to `scripts/generate_all_data.py`
 3. Create staging model in `dbt_project/models/staging/`
 4. Add source definition to `dbt_project/models/staging/schema.yml`
 

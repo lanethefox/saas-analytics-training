@@ -121,7 +121,7 @@ if (-not $SkipData) {
     pip install -r requirements.txt 2>$null | Out-Null
     
     # Run data generation
-    python scripts/generate_educational_data.py --size $Size
+    python scripts/generate_all_data.py --scale $Size
     if ($LASTEXITCODE -ne 0) {
         Write-Host "ERROR: Data generation failed!" -ForegroundColor Red
         Read-Host "Press Enter to exit"

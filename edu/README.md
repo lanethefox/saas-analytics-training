@@ -1,124 +1,150 @@
-# 🎓 Analytics Education Hub
+# Data Platform Analytics Education Program
 
-Welcome to the comprehensive education materials for learning B2B SaaS analytics. This hub contains curriculum, hands-on exercises, real-world simulations, and projects designed to take you from beginner to job-ready analyst.
+## 🎯 Program Overview
 
-## 🎯 Learning Paths
+Welcome to the comprehensive analytics education program for our B2B SaaS data platform. This program trains analysts across five specialized tracks using real-world data from 40,000+ accounts.
 
-### 📖 Start Here
-1. **[Curriculum Overview](curriculum_overview.md)** - Complete 16-week program structure
-2. **[Prerequisites](common_resources/data_literacy_prerequisites.md)** - What you need to know
-3. **[SQL Fundamentals](common_resources/sql_fundamentals_reference.md)** - Essential SQL skills
+## 📚 Program Structure
 
-### 🚀 Core Learning Modules
-1. **[Analytics Engineering](analytics_engineering/)** - Build the data foundation
-2. **[Sales Analytics](sales/)** - Pipeline analysis and forecasting
-3. **[Customer Success](customer_success/)** - Retention and health metrics
-4. **[Marketing Analytics](marketing/)** - Attribution and ROI
-5. **[Product Analytics](product_analytics/)** - Usage and adoption
+### Foundation Phase (Weeks 1-4)
+All learners complete a common core curriculum covering:
+- Data platform fundamentals
+- SQL and data modeling basics
+- Business context and key metrics
+- Analytical thinking frameworks
+- Collaboration tools and workflows
 
-### 💼 Practical Experience
-- **[Workday Simulations](workday-simulations/)** - Experience a day in the life
-- **[Quarterly Projects](quarterly-projects/)** - Real 12-week analyst projects
-- **[SQL Examples](examples/)** - Query patterns and solutions
-- **[Business Training](business-analytics-training/)** - Domain knowledge
-- **[Onboarding Exercises](onboarding/)** - Interactive tutorials
+### Specialization Phase (Weeks 5-16)
+Learners choose one of five specialized tracks:
 
-### 👩‍🏫 For Instructors
-- **[Instructor Guides](instructor_guides/)** - Teaching materials and answer keys
-- **[Workbook & Answers](Business_Analytics_Training_Workbook.md)** - Complete assessment materials
+## 🛤️ Learning Tracks
 
-### 📚 Resources
-- **[Common Resources](common_resources/)** - References and best practices
-- **[Learning Modules](learning_modules/)** - Structured lessons
+### 1. [Sales Analytics](./sales/)
+**Role:** Sales Analyst / Sales Operations Analyst
+- Pipeline management and forecasting
+- Territory and quota analytics
+- Sales performance optimization
+- Commission and compensation analysis
+
+### 2. [Customer Success Analytics](./customer_success/)
+**Role:** Customer Success Analyst / Retention Analyst
+- Customer health scoring
+- Churn prediction and prevention
+- Retention and expansion analytics
+- Customer journey optimization
+
+### 3. [Marketing Analytics](./marketing/)
+**Role:** Marketing Analyst / Growth Analyst
+- Campaign performance and ROI
+- Attribution modeling
+- Lead generation and scoring
+- Marketing mix optimization
+
+### 4. [Product Analytics](./product_analytics/)
+**Role:** Product Analyst / User Experience Analyst
+- User behavior analysis
+- Feature adoption and engagement
+- A/B testing and experimentation
+- Product-led growth metrics
+
+### 5. [Analytics Engineering](./analytics_engineering/)
+**Role:** Analytics Engineer / Data Engineer
+- Data modeling and architecture
+- Pipeline development and optimization
+- Platform reliability and performance
+- Data governance and quality
+
+## 📖 Course Materials
+
+### Core Resources
+- 📋 [Course Structure](./COURSE_STRUCTURE.md) - Complete program outline
+- 🏃 [Day-in-Life Activities](./*/day_in_life_activities.md) - Daily hands-on exercises
+- 📊 [Business Analytics Training](./business-analytics-training/) - Foundational business concepts
+- 🎯 [Quarterly Projects](./quarterly-projects/) - Real-world project simulations
+- 🚀 [Onboarding Guides](./onboarding/) - Quick start resources
+
+### Learning Resources
+- 💻 [Interactive SQL Tutorial](./onboarding/interactive_sql_tutorial.md) - From basics to advanced
+- 📚 [Metrics Catalog](./onboarding/available_metrics_catalog.md) - Complete metrics reference
+- 🔍 [Query Patterns](./onboarding/common_query_patterns.md) - Reusable SQL templates
+- 📖 [Data Dictionary](./onboarding/data_dictionary.md) - Entity and field definitions
+
+### Supplementary Materials
+- 🎓 [Instructor Guides](./instructor_guides/) - For educators and mentors
+- 💡 [SQL Examples](./examples/) - Advanced query examples
+- 📈 [Best Practices](./onboarding/analytics_best_practices.md) - Industry standards
+- 🗺️ [Career Roadmaps](./onboarding/roadmaps/) - Career progression paths
 
 ## 🚀 Getting Started
 
-### For Students
+### Prerequisites
+- Basic spreadsheet proficiency
+- Logical thinking ability
+- Curiosity about business analytics
+- No prior SQL experience required
 
-1. **Set Up Your Environment**
-   ```bash
-   # Run the automated onboarding
-   python3 scripts/onboarding_automation.py --name "Your Name" --team "Your Team"
-   ```
+### Setup Instructions
+1. Complete [environment setup](../docs/SETUP.md)
+2. Review [course structure](./COURSE_STRUCTURE.md)
+3. Choose your learning track
+4. Begin with Week 1 activities
 
-2. **Complete the Prerequisites**
-   - Work through the [Interactive SQL Tutorial](/docs/onboarding/common/interactive-sql-tutorial.md)
-   - Review [Data Literacy Prerequisites](common_resources/data_literacy_prerequisites.md)
-   - Familiarize yourself with [SQL Fundamentals](common_resources/sql_fundamentals_reference.md)
+### Daily Schedule
+- **Morning (2-3 hours):** Concept learning and guided exercises
+- **Midday (2 hours):** Hands-on practice with real data
+- **Afternoon (2-3 hours):** Project work and peer collaboration
+- **End of Day (30 min):** Reflection and documentation
 
-3. **Choose Your Learning Path**
-   - **Structured Path**: Follow the 16-week curriculum in order
-   - **Role-Based Path**: Jump to your team's specific materials
-   - **Project-Based Path**: Start with quarterly projects
+## 📊 Assessment & Certification
 
-### For Instructors
+### Continuous Assessment (60%)
+- Daily exercises completion
+- Weekly mini-projects
+- Peer review participation
 
-1. **Review Teaching Materials**
-   - [Instructor Guides](instructor_guides/) for each project
-   - Assessment rubrics and grading criteria
-   - Stakeholder simulation scripts
+### Major Projects (40%)
+- Mid-program project (Week 8)
+- Capstone project (Weeks 14-16)
 
-2. **Customize for Your Course**
-   - Adjust project timelines to fit your schedule
-   - Select modules based on student backgrounds
-   - Use workday simulations for practical assessments
+### Certification Requirements
+- Complete all daily activities
+- Pass weekly assessments (70%+)
+- Successfully deliver both major projects
+- Demonstrate proficiency in chosen track
 
-## 📊 Platform Features for Learning
+## 🤝 Support & Community
 
-### Real Data at Scale
-- 40,000 synthetic B2B accounts
-- 84,000 locations with industry variety
-- 180,000 IoT devices generating events
-- 3 years of historical data
+### Getting Help
+- 📧 Check [FAQ](./onboarding/faq.md) for common questions
+- 💬 Join track-specific study groups
+- 🎯 Schedule 1:1 mentor sessions
+- 📚 Access [supplementary resources](./common_resources/)
 
-### Production Tools
-- **PostgreSQL**: Industry-standard database
-- **dbt**: Modern data transformation
-- **Apache Superset**: Business intelligence
-- **Jupyter Lab**: Interactive analysis
+### Contributing
+We welcome contributions to improve the educational content:
+- Submit corrections via pull requests
+- Suggest new exercises or projects
+- Share success stories and use cases
+- Provide feedback on content clarity
 
-### Educational Enhancements
-- Pre-calculated metrics for easy analysis
-- Automated onboarding verification
-- Progressive SQL exercises
-- Complete metric lineage documentation
+## 📈 Success Metrics
 
-## 🎯 Learning Outcomes
+Graduates of this program will be able to:
+- Write complex SQL queries for business analysis
+- Build and maintain analytical dashboards
+- Communicate data insights effectively
+- Apply domain-specific analytical techniques
+- Contribute to data-driven decision making
 
-Upon completion, students will be able to:
+## 🎓 Next Steps
 
-1. **Technical Skills**
-   - Write complex SQL queries efficiently
-   - Build data models and transformations
-   - Create compelling visualizations
-   - Implement data quality checks
-
-2. **Business Acumen**
-   - Understand SaaS business metrics
-   - Identify actionable insights
-   - Align analysis with business goals
-   - Communicate findings effectively
-
-3. **Professional Readiness**
-   - Complete end-to-end analytics projects
-   - Work with cross-functional stakeholders
-   - Build a portfolio of real work
-   - Interview confidently for analyst roles
-
-## 📈 Success Tips
-
-1. **Start Small**: Begin with the SQL tutorial before diving into projects
-2. **Use the Lineage Docs**: Understanding metric calculations is crucial
-3. **Practice Daily**: Use workday simulations to build habits
-4. **Ask Questions**: Analytics is about curiosity
-5. **Document Everything**: Build your portfolio as you learn
-
-## 🤝 Support
-
-- **Technical Issues**: Check [Troubleshooting Guide](/docs/TROUBLESHOOTING.md)
-- **Learning Questions**: Post in course forums or Discord
-- **Platform Bugs**: Report on [GitHub Issues](https://github.com/yourusername/data-platform/issues)
+After completing the program:
+1. Build your analytics portfolio
+2. Apply for analyst positions
+3. Continue learning with advanced modules
+4. Mentor new learners
+5. Contribute to the analytics community
 
 ---
 
-*Ready to become a data analyst? Let's start with the [Curriculum Overview](curriculum_overview.md)!*
+*This educational program is continuously updated based on learner feedback and industry trends. Last updated: 2025*

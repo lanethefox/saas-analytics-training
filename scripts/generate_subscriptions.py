@@ -3,11 +3,12 @@
 Generate synthetic subscriptions data for the bar management SaaS platform.
 
 This module creates realistic subscription data with:
-- Subscription history for accounts
+- Subscription history for accounts  
 - Plan progression patterns (upgrades/downgrades)
 - Churn patterns (10% annual churn rate)
 - Trial conversions (70% trial-to-paid)
 - MRR matching account records
+- Controlled total subscription count (1.25x accounts)
 """
 
 import sys
@@ -42,6 +43,11 @@ SUBSCRIPTION_STATUS = ['trialing', 'active', 'past_due', 'canceled', 'paused']
 MONTHLY_CHURN_RATE = 0.0087
 TRIAL_CONVERSION_RATE = 0.70
 TRIAL_DURATION_DAYS = 14
+
+# Control subscription generation
+ACCOUNTS_WITH_HISTORY = 0.25  # 25% of accounts have plan change history
+MAX_SUBSCRIPTIONS_PER_ACCOUNT = 3  # Maximum subscription records per account
+
 def load_accounts():
     """Load generated accounts from JSON file"""
     mapping_file = os.path.join(
@@ -60,8 +66,8 @@ def load_accounts():
     
     return accounts
 
-def generate_subscription_history(account):
-    """Generate subscription history for an account"""
+def generate_subscription_for_account(account, include_history=False):
+    """Generate subscription(s) for an account"""
     subscriptions = []
     
     # Start with a trial
@@ -71,89 +77,8 @@ def generate_subscription_history(account):
     # Determine if trial converts
     converts = random.random() < TRIAL_CONVERSION_RATE
     
-    if converts:
-        # Create trial subscription
-        trial_sub = {
-            'account_id': account['id'],
-            'plan': account['subscription_tier'],
-            'status': 'canceled',  # Trial ended
-            'mrr': 0,
-            'start_date': trial_start,
-            'end_date': trial_end,
-            'is_trial': True,
-            'canceled_at': trial_end
-        }
-        subscriptions.append(trial_sub)
-        
-        # Create paid subscription
-        current_date = trial_end
-        current_plan = account['subscription_tier']
-        
-        # Generate subscription lifecycle
-        while current_date < datetime.now():
-            # Check for churn
-            if random.random() < MONTHLY_CHURN_RATE and len(subscriptions) > 1:
-                # Churn - end subscription
-                last_sub = subscriptions[-1]
-                last_sub['end_date'] = current_date
-                last_sub['status'] = 'canceled'
-                last_sub['canceled_at'] = current_date
-                break
-            
-            # Check for plan change (10% chance per year = ~0.8% monthly)
-            if random.random() < 0.008:
-                # Plan change - close current and start new
-                old_plan = current_plan
-                
-                # Determine upgrade or downgrade
-                if current_plan == 'basic':
-                    current_plan = 'pro' if random.random() < 0.8 else current_plan
-                elif current_plan == 'pro':
-                    if random.random() < 0.5:
-                        current_plan = 'enterprise'
-                    elif random.random() < 0.3:
-                        current_plan = 'basic'
-                else:  # enterprise
-                    current_plan = 'pro' if random.random() < 0.3 else current_plan
-                
-                if old_plan != current_plan:
-                    # End current subscription
-                    last_sub = subscriptions[-1]
-                    last_sub['end_date'] = current_date
-                    last_sub['status'] = 'canceled'
-                    last_sub['canceled_at'] = current_date
-                    
-                    # Start new subscription
-                    new_sub = {
-                        'account_id': account['id'],
-                        'plan': current_plan,
-                        'status': 'active',
-                        'mrr': SUBSCRIPTION_PLANS[current_plan]['mrr'],
-                        'start_date': current_date,
-                        'end_date': None,
-                        'is_trial': False,
-                        'canceled_at': None
-                    }
-                    subscriptions.append(new_sub)
-            
-            # Move to next month
-            current_date += relativedelta(months=1)
-        
-        # If no subscription yet (trial didn't have paid follow-up)
-        if len(subscriptions) == 1:
-            paid_sub = {
-                'account_id': account['id'],
-                'plan': current_plan,
-                'status': 'active' if account['is_active'] else 'canceled',
-                'mrr': SUBSCRIPTION_PLANS[current_plan]['mrr'],
-                'start_date': trial_end,
-                'end_date': None if account['is_active'] else datetime.now() - timedelta(days=random.randint(30, 365)),
-                'is_trial': False,
-                'canceled_at': None if account['is_active'] else datetime.now() - timedelta(days=random.randint(30, 365))
-            }
-            subscriptions.append(paid_sub)
-    else:
-        # Trial didn't convert - just the trial subscription
+    if not converts and include_history:
+        # Only include failed trials for accounts with history
         trial_sub = {
             'account_id': account['id'],
             'plan': account['subscription_tier'],
@@ -165,29 +90,93 @@ def generate_subscription_history(account):
             'canceled_at': trial_end
         }
         subscriptions.append(trial_sub)
+        return subscriptions
+    
+    # For converting accounts
+    if converts:
+        current_plan = account['subscription_tier']
+        sub_start = trial_end
+        
+        # Check if account is still active
+        if account['is_active']:
+            # Active subscription
+            active_sub = {
+                'account_id': account['id'],
+                'plan': current_plan,
+                'status': 'active',
+                'mrr': SUBSCRIPTION_PLANS[current_plan]['mrr'],
+                'start_date': sub_start,
+                'end_date': None,
+                'is_trial': False,
+                'canceled_at': None
+            }
+            subscriptions.append(active_sub)
+            
+            # Add plan change history for some accounts
+            if include_history and random.random() < 0.3:
+                # Create a previous subscription (plan change)
+                old_plan = 'basic' if current_plan != 'basic' else 'pro'
+                old_sub_start = sub_start - relativedelta(months=random.randint(6, 24))
+                
+                old_sub = {
+                    'account_id': account['id'],
+                    'plan': old_plan,
+                    'status': 'canceled',
+                    'mrr': SUBSCRIPTION_PLANS[old_plan]['mrr'],
+                    'start_date': old_sub_start,
+                    'end_date': sub_start,
+                    'is_trial': False,
+                    'canceled_at': sub_start
+                }
+                subscriptions.insert(0, old_sub)  # Insert at beginning
+        else:
+            # Canceled subscription
+            cancel_date = sub_start + relativedelta(months=random.randint(3, 36))
+            canceled_sub = {
+                'account_id': account['id'],
+                'plan': current_plan,
+                'status': 'canceled',
+                'mrr': SUBSCRIPTION_PLANS[current_plan]['mrr'],
+                'start_date': sub_start,
+                'end_date': cancel_date,
+                'is_trial': False,
+                'canceled_at': cancel_date
+            }
+            subscriptions.append(canceled_sub)
     
     return subscriptions
 
 def generate_subscriptions(accounts):
-    """Generate subscription data for all accounts"""
+    """Generate subscription data for all accounts with controlled total count"""
     all_subscriptions = []
     subscription_id = 1
     
-    print(f"Generating subscriptions for {len(accounts):,} accounts...")
+    # Calculate target total based on environment config
+    target_total = current_env.subscriptions
+    accounts_count = len(accounts)
+    
+    print(f"Generating ~{target_total:,} subscriptions for {accounts_count:,} accounts...")
+    print(f"  Target ratio: {target_total/accounts_count:.2f} subscriptions per account")
+    
+    # Determine which accounts get history
+    accounts_with_history = set(random.sample(range(accounts_count), 
+                                            int(accounts_count * ACCOUNTS_WITH_HISTORY)))
     
     for i, account in enumerate(accounts):
-        account_subs = generate_subscription_history(account)
+        include_history = i in accounts_with_history
+        account_subs = generate_subscription_for_account(account, include_history)
         
-        for sub in account_subs:
+        for sub in account_subs[:MAX_SUBSCRIPTIONS_PER_ACCOUNT]:  # Limit subs per account
             sub['id'] = subscription_id
             sub['created_at'] = sub['start_date']
             sub['updated_at'] = sub['start_date'] + timedelta(days=random.randint(0, 30))
             all_subscriptions.append(sub)
             subscription_id += 1
         
-        if (i + 1) % 100 == 0:
-            print(f"  Processed {i + 1:,} accounts...")
+        if (i + 1) % 10000 == 0:
+            print(f"  Processed {i + 1:,} accounts... ({len(all_subscriptions):,} subscriptions)")
     
+    print(f"  Generated {len(all_subscriptions):,} total subscriptions")
     return all_subscriptions
 
 def insert_subscriptions(subscriptions):

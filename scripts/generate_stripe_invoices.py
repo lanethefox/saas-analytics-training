@@ -99,6 +99,12 @@ def generate_invoices_for_subscription(subscription, subscription_items):
     if subscription['trial_end'] and start_date < subscription['trial_end']:
         start_date = subscription['trial_end']
     
+    # Limit historical invoice generation to last 12 months to control total count
+    # This gives us approximately the expected 1.5M invoices for 125K subscriptions
+    invoice_history_limit = datetime.now() - relativedelta(months=12)
+    if start_date < invoice_history_limit:
+        start_date = invoice_history_limit
+    
     # Determine the end date for invoice generation
     if subscription['status'] == 'active':
         end_date = datetime.now()

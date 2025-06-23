@@ -26,6 +26,7 @@ fake = Faker()
 
 def load_devices():
     """Load all devices with location info."""
+    print("Loading devices...")
     with db_helper.config.get_cursor() as cursor:
         cursor.execute("""
             SELECT d.id, d.location_id, d.device_type, d.status,
@@ -34,8 +35,10 @@ def load_devices():
             JOIN raw.app_database_locations l ON d.location_id = l.id
             ORDER BY d.id
         """)
+        rows = cursor.fetchall()
+        print(f"Found {len(rows)} devices")
         return [dict(zip(['id', 'location_id', 'device_type', 'status', 'customer_id'], row)) 
-                for row in cursor.fetchall()]
+                for row in rows]
 
 def generate_device_telemetry(env_config):
     """Generate device telemetry data."""
@@ -88,7 +91,10 @@ def generate_device_telemetry(env_config):
     
     # Generate telemetry for each device
     total_records = 100000
-    records_per_device = total_records // len(devices)
+    if not devices:
+        print("⚠️  No devices found to generate telemetry for")
+        return []
+    records_per_device = max(1, total_records // len(devices))
     
     for device in devices:
         device_type = device['device_type']
@@ -228,7 +234,7 @@ def save_telemetry_summary(records):
                 if error['severity'] == 'critical':
                     summary['critical_alerts'] += 1
     
-    summary['avg_health_score'] = sum(health_scores) / len(health_scores)
+    summary['avg_health_score'] = sum(health_scores) / len(health_scores) if health_scores else 0
     
     with open('data/device_telemetry_summary.json', 'w') as f:
         json.dump(summary, f, indent=2)
@@ -267,41 +273,42 @@ def main():
         if metrics.get('errors'):
             total_errors += len(metrics['errors'])
     
-    avg_health = sum(health_scores) / len(health_scores)
+    avg_health = sum(health_scores) / len(health_scores) if health_scores else 0
     
     print(f"\nTelemetry Statistics:")
     print(f"  - Unique Devices: {unique_devices}")
-    print(f"  - Records per Device: {len(records) / unique_devices:.0f}")
+    if unique_devices > 0:
+        print(f"  - Records per Device: {len(records) / unique_devices:.0f}")
+    else:
+        print(f"  - Records per Device: 0")
     print(f"  - Average Health Score: {avg_health:.1f}/100")
     print(f"  - Total Errors Logged: {total_errors:,}")
     
-    print("\nDevice Type Distribution:")
-    for device_type, count in sorted(device_types.items(), key=lambda x: x[1], reverse=True):
-        percentage = (count / len(records)) * 100
-        print(f"  - {device_type}: {count:,} ({percentage:.1f}%)")
+    if device_types:
+        print("\nDevice Type Distribution:")
+        for device_type, count in sorted(device_types.items(), key=lambda x: x[1], reverse=True):
+            percentage = (count / len(records)) * 100 if len(records) > 0 else 0
+            print(f"  - {device_type}: {count:,} ({percentage:.1f}%)")
     
     # Sample metrics
-    sample_record = random.choice(records)
-    sample_metrics = json.loads(sample_record['metrics'])
-    print(f"\nSample Telemetry Record:")
-    print(f"  - Device ID: {sample_record['device_id']}")
-    print(f"  - CPU Usage: {sample_metrics['cpu_usage_percent']}%")
-    print(f"  - Memory Usage: {sample_metrics['memory_usage_percent']}%")
-    print(f"  - Health Score: {sample_metrics['health_score']}")
-    print(f"  - Uptime: {sample_metrics['uptime_seconds'] / 3600:.1f} hours")
+    if records:
+        sample_record = random.choice(records)
+        sample_metrics = json.loads(sample_record['metrics'])
+        print(f"\nSample Telemetry Record:")
+        print(f"  - Device ID: {sample_record['device_id']}")
+        print(f"  - CPU Usage: {sample_metrics['cpu_usage_percent']}%")
+        print(f"  - Memory Usage: {sample_metrics['memory_usage_percent']}%")
+        print(f"  - Health Score: {sample_metrics['health_score']}")
+        print(f"  - Uptime: {sample_metrics['uptime_seconds'] / 3600:.1f} hours")
     
-    # Save to file since table doesn't exist
-    print("\nSaving telemetry data to file...")
-    with open('data/device_telemetry_records.json', 'w') as f:
-        # Save a subset to avoid huge file
-        json.dump(records[:1000], f, indent=2)
-    print("✓ Saved 1000 sample records to data/device_telemetry_records.json")
+    # Insert into database
+    print("\nInserting into database...")
+    db_helper.bulk_insert('device_telemetry', records)
     
     # Save summary
     save_telemetry_summary(records)
     
-    print(f"\n✓ Generated {len(records):,} telemetry records")
-    print("Note: Telemetry table doesn't exist in database, data saved to file instead")
+    print(f"\n✓ Successfully generated {len(records):,} telemetry records!")
 
 if __name__ == "__main__":
     main()

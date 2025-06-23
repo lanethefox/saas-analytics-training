@@ -34,12 +34,13 @@ LOCATION_TYPES = [
 ]
 
 # Weighted location counts per account
+# Adjusted to achieve average of 1.5 locations per account
 LOCATIONS_PER_ACCOUNT = [
-    (1, 0.40),  # 40% have 1 location
+    (1, 0.60),  # 60% have 1 location
     (2, 0.30),  # 30% have 2 locations
-    (3, 0.15),  # 15% have 3 locations
-    (4, 0.10),  # 10% have 4 locations
-    (5, 0.05),  # 5% have 5 locations
+    (3, 0.07),  # 7% have 3 locations
+    (4, 0.02),  # 2% have 4 locations
+    (5, 0.01),  # 1% have 5 locations
 ]
 # Popular US states for business (weighted)
 US_STATES = [
@@ -103,26 +104,19 @@ def generate_locations(accounts, total_locations):
     locations = []
     location_id = 1
     
-    print(f"Generating {total_locations:,} locations for {len(accounts):,} accounts...")
+    print(f"Generating locations for {len(accounts):,} accounts (target: ~{total_locations:,})...")
     
-    # Calculate locations per account to reach total
-    locations_needed = total_locations
+    # Use weighted distribution without forcing exact total
     account_locations = []
     
-    # First pass: assign minimum locations
+    # Assign locations based on weighted distribution
     for account in accounts:
         num_locations = weighted_choice(LOCATIONS_PER_ACCOUNT)
         account_locations.append((account, num_locations))
-        locations_needed -= num_locations
     
-    # Adjust if we need more locations
-    while locations_needed > 0:
-        # Add locations to random accounts
-        idx = random.randint(0, len(account_locations) - 1)
-        account, current_count = account_locations[idx]
-        if current_count < 5:  # Max 5 locations per account
-            account_locations[idx] = (account, current_count + 1)
-            locations_needed -= 1
+    # Calculate actual total
+    actual_total = sum(num_locs for _, num_locs in account_locations)
+    print(f"  Based on distribution: {actual_total:,} locations (ratio: {actual_total/len(accounts):.2f})")
     
     # Generate locations for each account
     for account, num_locations in account_locations:

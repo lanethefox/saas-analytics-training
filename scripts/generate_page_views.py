@@ -128,7 +128,7 @@ def generate_page_views(env_config):
             
         # Get user role
         user_id = session['user_id']
-        role = users.get(user_id, '').lower() if user_id > 0 else None
+        role = users.get(user_id, '').lower() if user_id and user_id != '0' else None
         
         # Select page patterns based on role
         if role and role in page_paths:
@@ -203,8 +203,8 @@ def generate_page_views(env_config):
             page_view = {
                 'page_view_id': str(uuid.uuid4()),
                 'session_id': session['session_id'],
-                'user_id': user_id if user_id > 0 else 0,
-                'customer_id': session['customer_id'] if session['customer_id'] > 0 else 0,
+                'user_id': user_id if user_id and user_id != '0' else '0',
+                'customer_id': session['customer_id'] if session['customer_id'] and session['customer_id'] != '0' else '0',
                 'page_url': 'https://app.barsaas.com' + page_path,
                 'page_title': page_title,
                 'time_on_page_seconds': int(time_on_page),

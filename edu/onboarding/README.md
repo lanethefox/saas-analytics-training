@@ -1,153 +1,120 @@
-# SaaS Analytics Platform - Data Team Onboarding Guide
+# Analytics Education Onboarding Guide
 
-Welcome to the SaaS Analytics Platform! This comprehensive guide will help you get started as a Senior Data Analyst working with our B2B SaaS analytics platform for bar management systems.
+## 🚀 Welcome New Analysts!
 
-## 🎯 Platform Overview
+This guide helps you get started with the Data Platform Analytics Education Program. Follow these steps to begin your analytics journey.
 
-Our platform serves **20,000+ accounts** across **30,000+ locations** with IoT-enabled tap devices, providing real-time analytics and insights for bar operations, customer success, sales, marketing, and product teams.
+## 📋 Onboarding Checklist
 
-### Key Platform Features
-- **Entity-Centric Modeling (ECM)** with 7 core business entities
-- **150+ pre-calculated metrics** for self-service analytics
-- **Sub-3 second query performance** for dashboards
-- **Unified data from 4+ source systems** (App, HubSpot, Stripe, Marketing)
-- **Time-series support** with daily, weekly, and monthly aggregations
+### Week 0: Pre-Program Setup
 
-## 📚 Team-Specific Guides
+#### Day 1: Environment Setup
+- [ ] Complete [platform setup](../../docs/SETUP.md)
+- [ ] Verify database access
+- [ ] Install required tools (SQL client, Git, etc.)
+- [ ] Run [automated onboarding script](./automated_onboarding.py)
 
-Choose your team's guide to get started:
+#### Day 2: Program Orientation
+- [ ] Read [program overview](../README.md)
+- [ ] Review [course structure](../COURSE_STRUCTURE.md)
+- [ ] Choose your learning track
+- [ ] Join track-specific Slack channel
 
-### 📊 [Sales Analytics Guide](./sales/README.md)
-- Pipeline visibility and forecasting
-- Sales performance tracking
-- Lead quality analysis
-- Territory management insights
+#### Day 3: Baseline Assessment
+- [ ] Complete [SQL readiness quiz](./sql_readiness_assessment.md)
+- [ ] Take [business knowledge survey](./business_knowledge_baseline.md)
+- [ ] Set personal learning goals
+- [ ] Schedule mentor introduction call
 
-### 🤝 [Customer Experience Analytics Guide](./customer-experience/README.md)
-- Customer health monitoring
-- Churn risk identification
-- Support performance metrics
-- User engagement analysis
+## 🎯 Quick Start Resources
 
-### 📈 [Marketing Analytics Guide](./marketing/README.md)
-- Campaign ROI analysis
-- Multi-touch attribution
-- Lead generation metrics
-- Channel performance optimization
+### Essential Reading
+1. **[Data Dictionary](./data_dictionary.md)** - Understand the data model
+2. **[Metrics Catalog](./available_metrics_catalog.md)** - Learn key business metrics
+3. **[Query Patterns](./common_query_patterns.md)** - Common SQL templates
+4. **[Best Practices](./analytics_best_practices.md)** - Analytics standards
 
-### 🚀 [Product Analytics Guide](./product/README.md)
-- Feature adoption tracking
-- User behavior analysis
-- Platform usage patterns
-- Retention and engagement metrics
+### Interactive Learning
+- **[SQL Tutorial](./interactive_sql_tutorial.md)** - 5 levels from beginner to advanced
+- **[Sample Queries](../examples/)** - Real-world query examples
+- **[Practice Exercises](./practice_exercises/)** - Hands-on challenges
 
-## 🏗️ Platform Architecture
+## 🛤️ Learning Path Selection
 
-### Data Model Layers
-```
-Sources → Staging → Intermediate → Entity → Mart
-```
+Choose your specialization based on interests and career goals:
 
-### Core Entities
-1. **Customers** - Account-level analytics
-2. **Devices** - IoT tap monitoring
-3. **Locations** - Venue operations
-4. **Users** - User engagement
-5. **Subscriptions** - Revenue tracking
-6. **Campaigns** - Marketing ROI
-7. **Features** - Product analytics
+### 📊 Business Analyst Tracks
+- **[Sales Analytics](./sales_onboarding_guide.md)** - Revenue and pipeline focus
+- **[Marketing Analytics](./marketing_onboarding_guide.md)** - Campaign and attribution focus
+- **[Customer Success](./customer_experience_onboarding_guide.md)** - Retention and growth focus
+- **[Product Analytics](./product_team_onboarding_guide.md)** - User behavior focus
 
-### Common Resources
-- [Metrics Catalog](./common/metrics-catalog.md) - Complete list of available metrics
-- [Query Patterns](./common/query-patterns.md) - Common SQL patterns and examples
-- [Data Dictionary](./common/data-dictionary.md) - Entity and field definitions
-- [Best Practices](./common/best-practices.md) - Analytics best practices
+### 🔧 Technical Track
+- **[Analytics Engineering](./analytics_engineering_onboarding_guide.md)** - Platform and pipeline focus
 
-## 🚀 Getting Started
+## 📚 Foundation Week Resources
 
-### 1. **Access Setup**
-```bash
-# Connect to the database
-psql -h localhost -U saas_user -d saas_platform_dev
-# Password: saas_secure_password_2024
-```
+### Week 1: Data Fundamentals
+- Monday: [Platform Overview](./week1/platform_overview.md)
+- Tuesday: [SQL Basics](./week1/sql_basics.md)
+- Wednesday: [Data Model Tour](./week1/data_model_tour.md)
+- Thursday: [First Queries](./week1/first_queries.md)
+- Friday: [Week 1 Project](./week1/project.md)
 
-### 2. **Key Tables to Know**
-- **Current State**: `entity.entity_<name>` (e.g., `entity.entity_customers`)
-- **Time Series**: `entity.entity_<name>_<grain>` (e.g., `entity.entity_customers_daily`)
-- **History**: `entity.entity_<name>_history` (audit trail)
-- **Metrics**: `metrics.<domain>` (e.g., `metrics.sales`)
+### Daily Routine
+1. **Morning (9-11am)**: Concept learning
+2. **Midday (11am-1pm)**: Guided practice
+3. **Afternoon (2-5pm)**: Hands-on exercises
+4. **End of Day (5-5:30pm)**: Reflection & questions
 
-### 3. **Your First Query**
-```sql
--- Top 10 customers by health score
-SELECT 
-    customer_id,
-    company_name,
-    customer_health_score,
-    monthly_recurring_revenue,
-    churn_risk_score
-FROM entity.entity_customers
-WHERE customer_health_score IS NOT NULL
-ORDER BY customer_health_score DESC
-LIMIT 10;
-```
+## 💡 Tips for Success
 
-## 🛠️ Tools & Services
+### Learning Strategies
+- **Start Simple**: Master basics before advancing
+- **Practice Daily**: Consistency beats intensity
+- **Ask Questions**: No question is too basic
+- **Document Learning**: Keep a learning journal
+- **Collaborate**: Learn with your cohort
 
-| Service | URL | Credentials |
-|---------|-----|-------------|
-| **Apache Superset** | http://localhost:8088 | admin / admin_password_2024 |
-| **Apache Airflow** | http://localhost:8080 | admin / admin_password_2024 |
-| **Jupyter Lab** | http://localhost:8888 | Token: saas_ml_token_2024 |
-| **MLflow** | http://localhost:5001 | - |
-| **Grafana** | http://localhost:3000 | admin / grafana_admin_2024 |
+### Common Pitfalls to Avoid
+- ❌ Skipping the fundamentals
+- ❌ Not testing your queries
+- ❌ Ignoring data quality
+- ❌ Working in isolation
+- ❌ Focusing only on technical skills
 
-## 📖 Documentation Structure
+## 🆘 Getting Help
 
-```
-docs/onboarding/
-├── README.md                    # This file
-├── sales/                       # Sales team guide
-│   ├── README.md               # Sales overview
-│   ├── metrics-guide.md        # Sales metrics
-│   ├── common-reports.md       # Standard reports
-│   └── sql-examples.md         # Query examples
-├── customer-experience/         # CX team guide
-├── marketing/                   # Marketing team guide
-├── product/                     # Product team guide
-├── common/                      # Shared resources
-│   ├── metrics-catalog.md      # All metrics
-│   ├── query-patterns.md       # SQL patterns
-│   ├── data-dictionary.md      # Entity definitions
-│   └── best-practices.md       # Best practices
-└── roadmap/                     # Future development
-    ├── analyst-roadmap.md      # Analyst priorities
-    └── data-scientist-roadmap.md # DS priorities
-```
+### Self-Service Resources
+- 📖 [FAQ](./faq.md) - Common questions answered
+- 🔍 [Troubleshooting Guide](./troubleshooting.md) - Common issues
+- 📚 [Glossary](./glossary.md) - Key terms explained
 
-## 🔄 Development Workflow
+### Human Support
+- 👥 **Peer Support**: Track-specific Slack channels
+- 👨‍🏫 **Mentors**: Weekly office hours (Tue/Thu 3-4pm)
+- 📧 **Program Team**: education@company.com
 
-1. **Explore Data**: Use Superset or SQL to explore entities
-2. **Build Queries**: Start with pre-calculated metrics
-3. **Create Reports**: Build domain-specific dashboards
-4. **Share Insights**: Document and share findings
-5. **Contribute**: Add new metrics or improve existing ones
+## 🎓 What's Next?
 
-## 🎯 Next Steps
+After completing onboarding:
+1. Begin Week 1 of your chosen track
+2. Set up weekly check-ins with your mentor
+3. Start building your analytics portfolio
+4. Engage with the learning community
 
-1. Review your team-specific guide
-2. Set up your local environment
-3. Run example queries from your domain
-4. Connect with your team lead for specific projects
-5. Join the #data-platform Slack channel
+## 📈 Track Your Progress
 
-## 📞 Support
-
-- **Slack**: #data-platform
-- **Documentation**: This guide + team wikis
-- **Office Hours**: Tuesdays & Thursdays 2-3 PM
+Use these milestones to measure your progress:
+- [ ] Week 1: Complete foundation modules
+- [ ] Week 2: Build first dashboard
+- [ ] Week 4: Pass foundation assessment
+- [ ] Week 8: Complete mid-program project
+- [ ] Week 12: Begin capstone project
+- [ ] Week 16: Graduate and receive certification
 
 ---
 
-Welcome aboard! We're excited to have you join our data team. 🚀
+**Remember**: Everyone starts somewhere. Focus on progress, not perfection. You're joining a supportive community of learners and practitioners who want to see you succeed!
+
+*Need help? Reach out in #education-support on Slack*
