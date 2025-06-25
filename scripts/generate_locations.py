@@ -21,6 +21,15 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from scripts.database_config import db_helper
 from scripts.config_loader import DataGenerationConfig, IDAllocator
 
+import os
+
+def should_truncate():
+    """Check if we should auto-truncate in Docker environment"""
+    if os.environ.get('DOCKER_ENV', 'false').lower() == 'true':
+        return True
+    response = input("Do you want to truncate and regenerate? (y/N): ")
+    return response.lower() == 'y'
+
 # Initialize configuration
 config = DataGenerationConfig()
 id_allocator = IDAllocator(config)
@@ -226,7 +235,7 @@ def update_account_location_counts(location_counts):
                 UPDATE raw.app_database_accounts 
                 SET location_count = %s
                 WHERE id = %s
-            """, (count, account_id))
+            """, (count, str(account_id)))
         
         cursor.connection.commit()
         print(f"✓ Updated location counts for {len(location_counts)} accounts")
@@ -313,8 +322,7 @@ def main():
     existing_count = db_helper.get_row_count('app_database_locations')
     if existing_count > 0:
         print(f"\n⚠️  Warning: {existing_count} locations already exist")
-        response = input("Do you want to truncate and regenerate? (y/N): ")
-        if response.lower() == 'y':
+        if should_truncate():
             db_helper.truncate_table('app_database_locations')
         else:
             print("Aborting...")

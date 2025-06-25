@@ -21,6 +21,15 @@ from faker import Faker
 from scripts.database_config import db_helper
 from scripts.environment_config import get_environment_config
 
+import os
+
+def should_truncate():
+    """Check if we should auto-truncate in Docker environment"""
+    if os.environ.get('DOCKER_ENV', 'false').lower() == 'true':
+        return True
+    response = input("Do you want to truncate and regenerate? (y/N): ")
+    return response.lower() == 'y'
+
 fake = Faker()
 
 def load_users():
@@ -89,8 +98,11 @@ def generate_feature_usage(env_config):
     ]
     
     # Calculate events needed per user
-    total_events_needed = 150000
-    events_per_user = total_events_needed // len(active_users)
+    total_events_needed = 1000000  # Changed to 1M as requested
+    events_per_user = total_events_needed // len(active_users) if active_users else 0
+    
+    print(f"Active users found: {len(active_users)}")
+    print(f"Events per user: {events_per_user}")
     
     # Generate events for each active user
     for user in active_users:
@@ -157,7 +169,7 @@ def generate_feature_usage(env_config):
         feature_events.extend(user_events)
     
     # Trim to exact count needed
-    return feature_events[:150000]
+    return feature_events[:1000000]
 
 def save_feature_usage_summary(events):
     """Save feature usage summary for future reference."""

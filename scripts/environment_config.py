@@ -73,6 +73,44 @@ class EnvironmentConfig:
 
 # Define environment configurations
 ENVIRONMENTS = {
+    'XS': EnvironmentConfig(
+        name='XS',
+        # Core entities
+        accounts=100,
+        locations=150,  # ~1.5 per account
+        users=300,      # ~3 per account
+        devices=450,    # ~3 per location
+        subscriptions=87,
+        
+        # Event data (reduced for faster generation)
+        tap_events=500_000,  # ~1.1K per device
+        user_sessions=50_000,
+        page_views=25_000,   # Reduced from 250k for faster generation
+        feature_usage_events=100_000,
+        
+        # Stripe billing  
+        stripe_customers=100,
+        stripe_subscriptions=87,
+        stripe_subscription_items=95,
+        stripe_invoices=300,
+        stripe_charges=300,
+        stripe_events=500,
+        
+        # HubSpot CRM
+        hubspot_companies=125,
+        hubspot_contacts=500,
+        hubspot_deals=250,
+        hubspot_engagements=2_500,
+        hubspot_tickets=400,
+        
+        # Marketing
+        campaigns=25,
+        campaign_performance_records=500,
+        attribution_touchpoints=15_000,
+        marketing_qualified_leads=150,
+        google_analytics_sessions=2_000
+    ),
+    
     'DEV': EnvironmentConfig(
         name='DEV',
         # Core entities
@@ -228,11 +266,12 @@ ENVIRONMENTS = {
 
 # Scale name mappings
 SCALE_MAPPING = {
-    'xs': 'DEV',
+    'xs': 'XS',
     'small': 'QA',
     'medium': 'PRODUCTION',
     'large': 'LARGE',
     # Also support direct environment names
+    'xs': 'XS',
     'dev': 'DEV',
     'qa': 'QA',
     'production': 'PRODUCTION'

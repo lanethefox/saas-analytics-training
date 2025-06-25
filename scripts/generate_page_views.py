@@ -21,6 +21,15 @@ from faker import Faker
 from scripts.database_config import db_helper
 from scripts.environment_config import get_environment_config
 
+import os
+
+def should_truncate():
+    """Check if we should auto-truncate in Docker environment"""
+    if os.environ.get('DOCKER_ENV', 'false').lower() == 'true':
+        return True
+    response = input("Do you want to truncate and regenerate? (y/N): ")
+    return response.lower() == 'y'
+
 fake = Faker()
 
 def load_user_sessions():
@@ -223,15 +232,15 @@ def generate_page_views(env_config):
             if current_time > session_end:
                 break
     
-    return page_views[:250000]  # Ensure exactly 250,000
+    return page_views
 
 def save_page_views_summary(page_views):
     """Save page views summary for future reference."""
     summary = {
         'total_page_views': len(page_views),
-        'unique_sessions': len(set(pv['session_id'] for pv in page_views)),
+        'unique_sessions': len(set(pv['session_id'] for pv in page_views)) if page_views else 0,
         'avg_load_time_ms': 0,  # Not tracked in this table
-        'avg_time_on_page': sum(pv['time_on_page_seconds'] for pv in page_views) / len(page_views),
+        'avg_time_on_page': sum(pv['time_on_page_seconds'] for pv in page_views) / len(page_views) if page_views else 0,
         'bounce_rate': 0.0,  # Not tracked in this table
         'top_pages': {},
         'pages_by_role': {}
@@ -258,6 +267,8 @@ def main():
     # Get environment configuration
     env_config = get_environment_config()
     print(f"Environment: {env_config.name}")
+    target_count = env_config.page_views
+    print(f"Target: {target_count:,} page views")
     
     # Test database connection
     if not db_helper.test_connection():
@@ -267,13 +278,23 @@ def main():
     # Generate page views
     print("\nGenerating page views...")
     page_views = generate_page_views(env_config)
-    print(f"✓ Generated {len(page_views)} page views")
+    
+    # Limit to target count
+    if len(page_views) > target_count:
+        page_views = page_views[:target_count]
+        print(f"✓ Generated {len(page_views):,} page views (limited to target)")
+    else:
+        print(f"✓ Generated {len(page_views):,} page views")
     
     # Statistics
-    unique_sessions = len(set(pv['session_id'] for pv in page_views))
-    # avg_load_time = sum(pv['page_load_time_ms'] for pv in page_views) / len(page_views)
-    avg_time_on_page = sum(pv['time_on_page_seconds'] for pv in page_views) / len(page_views)
-    # bounce_rate = len([pv for pv in page_views if pv['bounce']]) / len(page_views)
+    if len(page_views) > 0:
+        unique_sessions = len(set(pv['session_id'] for pv in page_views))
+        # avg_load_time = sum(pv['page_load_time_ms'] for pv in page_views) / len(page_views)
+        avg_time_on_page = sum(pv['time_on_page_seconds'] for pv in page_views) / len(page_views)
+        # bounce_rate = len([pv for pv in page_views if pv['bounce']]) / len(page_views)
+    else:
+        unique_sessions = 0
+        avg_time_on_page = 0
     
     print(f"\nPage View Statistics:")
     print(f"  - Unique Sessions: {unique_sessions:,}")
@@ -290,9 +311,17 @@ def main():
         percentage = (count / len(page_views)) * 100
         print(f"  - {path}: {count:,} ({percentage:.1f}%)")
     
-    # Insert into database
+    # Insert into database in batches
     print("\nInserting into database...")
-    db_helper.bulk_insert('app_database_page_views', page_views)
+    batch_size = 5000
+    total_inserted = 0
+    
+    for i in range(0, len(page_views), batch_size):
+        batch = page_views[i:i + batch_size]
+        inserted = db_helper.bulk_insert('app_database_page_views', batch)
+        total_inserted += inserted
+        if i % 20000 == 0:
+            print(f"  Inserted {i:,} records...")
     
     # Save summary
     save_page_views_summary(page_views)

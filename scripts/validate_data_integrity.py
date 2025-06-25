@@ -67,7 +67,7 @@ class DataValidator:
                 result = cursor.fetchone()
                 
                 if result[2] > 0:  # Has data
-                    actual_min, actual_max = result[0], result[1]
+                    actual_min, actual_max = int(result[0]), int(result[1])
                     
                     if actual_min < min_id:
                         self.add_error(f"{entity}: Minimum ID {actual_min} is below range start {min_id}")
@@ -159,16 +159,22 @@ class DataValidator:
         # Check account size distribution
         with db_helper.config.get_cursor() as cursor:
             cursor.execute("""
+                WITH account_sizes AS (
+                    SELECT 
+                        id,
+                        CASE 
+                            WHEN id::integer <= 105 THEN 'small'
+                            WHEN id::integer <= 135 THEN 'medium'
+                            WHEN id::integer <= 147 THEN 'large'
+                            ELSE 'enterprise'
+                        END as size
+                    FROM raw.app_database_accounts
+                )
                 SELECT 
-                    CASE 
-                        WHEN id <= 105 THEN 'small'
-                        WHEN id <= 135 THEN 'medium'
-                        WHEN id <= 147 THEN 'large'
-                        ELSE 'enterprise'
-                    END as size,
+                    size,
                     COUNT(*) as count,
                     ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 1) as percentage
-                FROM raw.app_database_accounts
+                FROM account_sizes
                 GROUP BY size
                 ORDER BY 
                     CASE size

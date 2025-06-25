@@ -14,6 +14,7 @@ enriched as (
         id as device_id,
         {{ dbt_utils.generate_surrogate_key(['id']) }} as device_key,
         location_id,
+        customer_id,
         
         -- Core attributes
         device_type,

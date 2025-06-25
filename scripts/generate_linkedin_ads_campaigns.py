@@ -15,6 +15,7 @@ import os
 import json
 import random
 import uuid
+import argparse
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from faker import Faker
@@ -201,66 +202,25 @@ def generate_linkedin_campaigns():
             conversions = int(clicks * random.uniform(0.05, 0.10))       # 5-10% conversion
         
         # Generate campaign name
-        campaign_name = f"{objective.replace('_', ' ').title()} - {format_type.replace('_', ' ').title()} - {campaign_start.strftime('%Q%q %Y')}"
+        campaign_name = f"{objective.replace('_', ' ').title()} - {format_type.replace('_', ' ').title()} - {campaign_start.strftime('%b %Y')}"
         
-        # B2B Targeting
-        targeting = {
-            'job_titles': random.sample(JOB_TITLES, k=random.randint(3, 6)),
-            'job_functions': random.sample(JOB_FUNCTIONS, k=random.randint(2, 4)),
-            'job_seniorities': random.sample(JOB_SENIORITIES, k=random.randint(2, 3)),
-            'company_sizes': random.sample(COMPANY_SIZES, k=random.randint(2, 4)),
-            'industries': random.sample(INDUSTRIES, k=random.randint(2, 4)),
-            'locations': {
-                'countries': ['United States'],
-                'regions': random.sample([
-                    'California', 'Texas', 'New York', 'Florida',
-                    'Illinois', 'Pennsylvania', 'Ohio', 'Georgia'
-                ], k=random.randint(3, 6))
-            },
-            'audience_expansion': random.choice([True, False]),
-            'matched_audiences': []
-        }
-        
-        # Engagement metrics
-        social_actions = int(impressions * random.uniform(0.001, 0.003))  # Likes, shares, etc.
+        # Removed targeting and engagement metrics - not in schema
         
         campaign = {
             'id': campaign_id,
             'name': campaign_name,
-            'objective': objective,
-            'format': format_type,
             'status': status,
+            'campaign_type': format_type,  # Using format_type as campaign_type
+            'objective_type': objective,
             'created_time': campaign_start,
-            'updated_time': campaign_start + timedelta(days=random.randint(0, 7)),
             'start_date': campaign_start.date(),
             'end_date': campaign_end.date(),
-            'daily_budget': daily_budget * 100,  # Store in cents
-            'total_budget': total_budget * 100,
-            'bid_type': random.choice(['AUTOMATED', 'CPM', 'CPC', 'CPV']),
-            'bid_amount': random.randint(500, 2000),  # $5-20
-            'currency': 'USD',
-            'time_zone': 'America/New_York',
-            'targeting': json.dumps(targeting),
-            'creative_type': format_type,
+            'daily_budget': daily_budget,  # In dollars
+            'total_budget': total_budget,  # In dollars
             'impressions': impressions,
             'clicks': clicks,
-            'spend': int(total_spend * 100),  # Store in cents
-            'reach': int(impressions * random.uniform(0.4, 0.6)),  # 40-60% unique reach
-            'frequency': round(random.uniform(1.5, 3.0), 2),
-            'conversions': conversions,
-            'conversion_rate': round(conversions / clicks * 100, 2) if clicks > 0 else 0,
-            'cost_per_click': round(total_spend / clicks, 2) if clicks > 0 else 0,
-            'cost_per_conversion': round(total_spend / conversions, 2) if conversions > 0 else 0,
-            'cost_per_thousand': round(total_spend / impressions * 1000, 2) if impressions > 0 else 0,
-            'click_through_rate': round(clicks / impressions * 100, 3) if impressions > 0 else 0,
-            'social_actions': social_actions,
-            'engagement_rate': round(social_actions / impressions * 100, 3) if impressions > 0 else 0,
-            'video_views': int(impressions * 0.3) if format_type == 'VIDEO_ADS' else None,
-            'video_completions': int(impressions * 0.1) if format_type == 'VIDEO_ADS' else None,
-            'leads_generated': conversions if objective == 'LEAD_GENERATION' else 0,
-            'lead_form_completion_rate': round(random.uniform(0.15, 0.35), 3) if objective == 'LEAD_GENERATION' else None,
-            'message_sends': clicks if format_type == 'MESSAGE_ADS' else 0,
-            'message_opens': int(clicks * 0.7) if format_type == 'MESSAGE_ADS' else 0
+            'cost': round(total_spend, 2),  # In dollars
+            'conversions': conversions
         }
         
         campaigns.append(campaign)
@@ -294,13 +254,13 @@ def verify_linkedin_campaigns():
     with db_helper.config.get_cursor(dict_cursor=True) as cursor:
         cursor.execute("""
             SELECT 
-                objective,
+                objective_type as objective,
                 COUNT(*) as count,
-                AVG(spend/100.0) as avg_spend,
-                AVG(cost_per_conversion/100.0) as avg_cpc,
+                AVG(cost) as avg_spend,
+                AVG(CASE WHEN conversions > 0 THEN cost / conversions ELSE 0 END) as avg_cpc,
                 SUM(conversions) as total_conversions
             FROM raw.linkedin_ads_campaigns
-            GROUP BY objective
+            GROUP BY objective_type
             ORDER BY count DESC
         """)
         obj_dist = cursor.fetchall()
@@ -310,26 +270,32 @@ def verify_linkedin_campaigns():
             cpc = row['avg_cpc'] if row['avg_cpc'] else 0
             print(f"  {row['objective']}: {row['count']:,} campaigns, ${row['avg_spend']:,.2f} avg spend, ${cpc:.2f} avg CPC, {row['total_conversions']:,} conversions")
         
-        # Show format performance
+        # Show campaign type performance
         cursor.execute("""
             SELECT 
-                format,
+                campaign_type,
                 COUNT(*) as campaigns,
-                AVG(click_through_rate) as avg_ctr,
-                AVG(conversion_rate) as avg_conv_rate,
-                SUM(leads_generated) as total_leads
+                AVG(CASE WHEN impressions > 0 THEN clicks::float / impressions * 100 ELSE 0 END) as avg_ctr,
+                AVG(CASE WHEN clicks > 0 THEN conversions::float / clicks * 100 ELSE 0 END) as avg_conv_rate,
+                SUM(conversions) as total_conversions
             FROM raw.linkedin_ads_campaigns
-            GROUP BY format
+            GROUP BY campaign_type
             ORDER BY campaigns DESC
         """)
         format_summary = cursor.fetchall()
         
-        print("\nCampaign format performance:")
+        print("\nCampaign type performance:")
         for row in format_summary:
-            print(f"  {row['format']}: {row['campaigns']:,} campaigns, {row['avg_ctr']:.3f}% CTR, {row['avg_conv_rate']:.2f}% conv rate, {row['total_leads']:,} leads")
+            print(f"  {row['campaign_type']}: {row['campaigns']:,} campaigns, {row['avg_ctr']:.3f}% CTR, {row['avg_conv_rate']:.2f}% conv rate, {row['total_conversions']:,} conversions")
 
 def main():
     """Main execution function"""
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Generate LinkedIn Ads campaigns data')
+    parser.add_argument('--force', action='store_true', 
+                        help='Force regeneration without prompting')
+    args = parser.parse_args()
+    
     print("=" * 60)
     print("LinkedIn Ads Campaign Generation")
     print(f"Environment: {current_env.name}")
@@ -339,12 +305,16 @@ def main():
     existing_count = db_helper.get_row_count('linkedin_ads_campaigns')
     if existing_count > 0:
         print(f"\n⚠️  Warning: {existing_count:,} campaigns already exist")
-        response = input("Do you want to truncate and regenerate? (y/N): ")
-        if response.lower() == 'y':
+        if args.force:
+            print("Force flag set - truncating existing data...")
             db_helper.truncate_table('linkedin_ads_campaigns')
         else:
-            print("Aborting...")
-            return
+            response = input("Do you want to truncate and regenerate? (y/N): ")
+            if response.lower() == 'y':
+                db_helper.truncate_table('linkedin_ads_campaigns')
+            else:
+                print("Aborting...")
+                return
     
     # Generate campaigns
     campaigns = generate_linkedin_campaigns()

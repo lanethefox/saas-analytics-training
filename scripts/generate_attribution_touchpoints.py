@@ -111,6 +111,13 @@ def generate_attribution_touchpoints(env_config):
         'free-trial', 'contact-sales'
     ]
     
+    # Touchpoint types
+    touchpoint_types = [
+        'page_view', 'form_submission', 'demo_request', 'content_download',
+        'email_click', 'ad_click', 'webinar_attendance', 'trial_signup',
+        'sales_call', 'event_attendance'
+    ]
+    
     # Generate touchpoints for each won deal (these led to conversions)
     for deal in won_deals:
         # Determine number of touchpoints in journey (B2B has longer journeys)
@@ -173,6 +180,22 @@ def generate_attribution_touchpoints(env_config):
             
             # Select content
             content = random.choice(content_types)
+            
+            # Select touchpoint type based on content and channel
+            if content in ['demo-request', 'contact-sales']:
+                touchpoint_type = 'form_submission'
+            elif content == 'free-trial':
+                touchpoint_type = 'trial_signup'
+            elif content in ['webinar']:
+                touchpoint_type = 'webinar_attendance'
+            elif content in ['ebook', 'case-study']:
+                touchpoint_type = 'content_download'
+            elif channel == 'email':
+                touchpoint_type = 'email_click'
+            elif channel in ['paid_search', 'paid_social', 'display']:
+                touchpoint_type = 'ad_click'
+            else:
+                touchpoint_type = 'page_view'
             
             journey_touchpoints.append({
                 'id': touchpoint_id,

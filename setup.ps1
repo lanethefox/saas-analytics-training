@@ -20,7 +20,6 @@ try {
 
 # Parse command line arguments
 param(
-    [string]$Size = "small",
     [switch]$SkipData = $false,
     [switch]$Full = $false,
     [switch]$Help = $false
@@ -31,14 +30,14 @@ if ($Help) {
     Write-Host "Usage: .\setup.ps1 [options]" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "Options:" -ForegroundColor Yellow
-    Write-Host "  -Size SIZE         Dataset size (xs, small, medium, large) [default: small]"
+    Write-Host ""
     Write-Host "  -SkipData          Skip data generation step"
     Write-Host "  -Full              Use full stack with all services"
     Write-Host "  -Help              Show this help message"
     Write-Host ""
     Write-Host "Examples:" -ForegroundColor Green
     Write-Host "  .\setup.ps1                    # Core services + small dataset"
-    Write-Host "  .\setup.ps1 -Size large        # Core services + large dataset"
+    Write-Host "  .\setup.ps1                    # Core services + deterministic data"
     Write-Host "  .\setup.ps1 -Full              # All services + small dataset"
     Write-Host "  .\setup.ps1 -SkipData          # Core services, no data"
     Write-Host ""
@@ -48,7 +47,7 @@ if ($Help) {
 $ComposeFile = if ($Full) { "docker-compose.full.yml" } else { "docker-compose.yml" }
 
 Write-Host "Starting setup with:" -ForegroundColor Green
-Write-Host "- Dataset size: $Size"
+Write-Host "- Using deterministic data generation"
 Write-Host "- Skip data generation: $SkipData"
 Write-Host "- Compose file: $ComposeFile"
 Write-Host ""
@@ -103,7 +102,7 @@ if ($postgresReady) {
 # Generate data if not skipped
 if (-not $SkipData) {
     Write-Host ""
-    Write-Host "Generating educational data (size: $Size)..." -ForegroundColor Yellow
+    Write-Host "Generating deterministic data..." -ForegroundColor Yellow
     
     # Check if Python is available
     try {
@@ -120,8 +119,8 @@ if (-not $SkipData) {
     Write-Host "Installing Python dependencies..." -ForegroundColor Yellow
     pip install -r requirements.txt 2>$null | Out-Null
     
-    # Run data generation
-    python scripts/generate_all_data.py --scale $Size
+    # Run deterministic data generation
+    python scripts/generate_all_deterministic.py
     if ($LASTEXITCODE -ne 0) {
         Write-Host "ERROR: Data generation failed!" -ForegroundColor Red
         Read-Host "Press Enter to exit"

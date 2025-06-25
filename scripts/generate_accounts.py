@@ -22,6 +22,15 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from scripts.database_config import db_helper
 from scripts.config_loader import DataGenerationConfig, IDAllocator
 
+import os
+
+def should_truncate():
+    """Check if we should auto-truncate in Docker environment"""
+    if os.environ.get('DOCKER_ENV', 'false').lower() == 'true':
+        return True
+    response = input("Do you want to truncate and regenerate? (y/N): ")
+    return response.lower() == 'y'
+
 # Initialize configuration
 config = DataGenerationConfig()
 id_allocator = IDAllocator(config)
@@ -105,11 +114,18 @@ def get_created_date(account_index, total_accounts):
 
 def get_account_size(account_id):
     """Determine account size based on ID range"""
-    if account_id <= 105:
+    distribution = config.config['accounts']['distribution']
+    
+    # Calculate thresholds based on counts
+    small_threshold = distribution['small']['count']
+    medium_threshold = small_threshold + distribution['medium']['count']
+    large_threshold = medium_threshold + distribution['large']['count']
+    
+    if account_id <= small_threshold:
         return 'small'
-    elif account_id <= 135:
+    elif account_id <= medium_threshold:
         return 'medium'
-    elif account_id <= 147:
+    elif account_id <= large_threshold:
         return 'large'
     else:
         return 'enterprise'
@@ -261,16 +277,22 @@ def verify_accounts():
         
         # Size distribution (based on ID ranges)
         cursor.execute("""
+            WITH account_sizes AS (
+                SELECT 
+                    id,
+                    CASE 
+                        WHEN id::integer <= 105 THEN 'small'
+                        WHEN id::integer <= 135 THEN 'medium'
+                        WHEN id::integer <= 147 THEN 'large'
+                        ELSE 'enterprise'
+                    END as size
+                FROM raw.app_database_accounts
+            )
             SELECT 
-                CASE 
-                    WHEN id <= 105 THEN 'small'
-                    WHEN id <= 135 THEN 'medium'
-                    WHEN id <= 147 THEN 'large'
-                    ELSE 'enterprise'
-                END as size,
+                size,
                 COUNT(*) as count,
                 ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 1) as percentage
-            FROM raw.app_database_accounts
+            FROM account_sizes
             GROUP BY size
             ORDER BY 
                 CASE size
@@ -297,8 +319,7 @@ def main():
     existing_count = db_helper.get_row_count('app_database_accounts')
     if existing_count > 0:
         print(f"\n⚠️  Warning: {existing_count} accounts already exist")
-        response = input("Do you want to truncate and regenerate? (y/N): ")
-        if response.lower() == 'y':
+        if should_truncate():
             db_helper.truncate_table('app_database_accounts')
         else:
             print("Aborting...")

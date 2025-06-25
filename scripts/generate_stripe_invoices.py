@@ -341,16 +341,23 @@ def main():
     print(f"Environment: {current_env.name}")
     print("=" * 60)
     
+    # Check for force flag
+    force_mode = '--force' in sys.argv
+    
     # Check if invoices already exist
     existing_count = db_helper.get_row_count('stripe_invoices')
     if existing_count > 0:
         print(f"\n⚠️  Warning: {existing_count:,} invoices already exist")
-        response = input("Do you want to truncate and regenerate? (y/N): ")
-        if response.lower() == 'y':
+        if force_mode:
+            print("Force mode enabled - truncating existing data...")
             db_helper.truncate_table('stripe_invoices')
         else:
-            print("Aborting...")
-            return
+            response = input("Do you want to truncate and regenerate? (y/N): ")
+            if response.lower() == 'y':
+                db_helper.truncate_table('stripe_invoices')
+            else:
+                print("Aborting...")
+                return
     
     # Load subscriptions
     subscriptions = load_stripe_subscriptions()

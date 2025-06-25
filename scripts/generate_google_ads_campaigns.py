@@ -15,6 +15,7 @@ import os
 import json
 import random
 import uuid
+import argparse
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from faker import Faker
@@ -175,64 +176,31 @@ def generate_google_campaigns():
         theme = random.choice(AD_GROUP_THEMES)
         campaign_name = f"{campaign_type} - {theme} - {campaign_start.strftime('%b %Y')}"
         
-        # Network settings
-        networks = {
-            'search_network': campaign_type in ['SEARCH', 'PERFORMANCE_MAX'],
-            'display_network': campaign_type in ['DISPLAY', 'PERFORMANCE_MAX'],
-            'youtube': campaign_type in ['VIDEO', 'PERFORMANCE_MAX'],
-            'partners': random.choice([True, False])
-        }
+        # Removed network settings, geo targets, and advanced metrics - not in schema
         
-        # Location targeting
-        geo_targets = {
-            'included': random.sample([
-                'United States', 'California', 'Texas', 'New York',
-                'Florida', 'Illinois', 'Pennsylvania', 'Ohio'
-            ], k=random.randint(1, 4)),
-            'excluded': []
+        # Map campaign type to advertising channel type
+        advertising_channel_map = {
+            'SEARCH': 'SEARCH',
+            'DISPLAY': 'DISPLAY',
+            'PERFORMANCE_MAX': 'MULTI_CHANNEL',
+            'VIDEO': 'VIDEO',
+            'SHOPPING': 'SHOPPING'
         }
-        
-        # Advanced metrics
-        search_impression_share = random.uniform(0.10, 0.60) if campaign_type == 'SEARCH' else None
-        search_rank_lost_is = random.uniform(0.20, 0.50) if campaign_type == 'SEARCH' else None
         
         campaign = {
             'id': campaign_id,
             'name': campaign_name,
-            'campaign_type': campaign_type,
             'status': status,
-            'created_time': campaign_start,
-            'updated_time': campaign_start + timedelta(days=random.randint(0, 7)),
+            'campaign_type': campaign_type,
+            'advertising_channel_type': advertising_channel_map[campaign_type],
             'start_date': campaign_start.date(),
             'end_date': campaign_end.date(),
-            'budget': daily_budget * 100,  # Store in cents
-            'bidding_strategy': bidding_strategy,
-            'target_cpa': random.randint(2000, 10000) if bidding_strategy == 'TARGET_CPA' else None,
-            'target_roas': round(random.uniform(2.0, 5.0), 2) if bidding_strategy == 'TARGET_ROAS' else None,
-            'currency': 'USD',
-            'time_zone': 'America/New_York',
-            'networks': json.dumps(networks),
-            'geo_targets': json.dumps(geo_targets),
-            'language_targets': json.dumps(['en']),
-            'ad_rotation': random.choice(['OPTIMIZE', 'ROTATE_EVENLY']),
-            'delivery_method': 'STANDARD',
+            'budget_amount': daily_budget,  # In dollars
+            'target_cpa': round(random.uniform(20, 100), 2) if bidding_strategy == 'TARGET_CPA' else None,  # In dollars
             'impressions': impressions,
             'clicks': clicks,
-            'cost': int(total_spend * 100),  # Store in cents
-            'conversions': conversions,
-            'conversion_value': conversions * random.randint(50, 300) * 100,  # $50-300 per conversion
-            'view_through_conversions': int(conversions * random.uniform(0.1, 0.3)),
-            'average_cpc': round(total_spend / clicks, 2) if clicks > 0 else 0,
-            'average_cpm': round(total_spend / impressions * 1000, 2) if impressions > 0 else 0,
-            'ctr': round(clicks / impressions * 100, 3) if impressions > 0 else 0,
-            'conversion_rate': round(conversions / clicks * 100, 2) if clicks > 0 else 0,
-            'cost_per_conversion': round(total_spend / conversions, 2) if conversions > 0 else 0,
-            'quality_score': quality_score,
-            'search_impression_share': search_impression_share,
-            'search_rank_lost_is': search_rank_lost_is,
-            'ad_relevance': random.choice(['ABOVE_AVERAGE', 'AVERAGE', 'BELOW_AVERAGE']),
-            'landing_page_experience': random.choice(['ABOVE_AVERAGE', 'AVERAGE', 'BELOW_AVERAGE']),
-            'expected_ctr': random.choice(['ABOVE_AVERAGE', 'AVERAGE', 'BELOW_AVERAGE'])
+            'cost': round(total_spend, 2),  # In dollars
+            'conversions': conversions
         }
         
         campaigns.append(campaign)
@@ -268,8 +236,7 @@ def verify_google_campaigns():
             SELECT 
                 campaign_type,
                 COUNT(*) as count,
-                AVG(cost/100.0) as avg_cost,
-                AVG(quality_score) as avg_quality_score,
+                AVG(cost) as avg_cost,
                 SUM(conversions) as total_conversions
             FROM raw.google_ads_campaigns
             GROUP BY campaign_type
@@ -279,28 +246,33 @@ def verify_google_campaigns():
         
         print("\nCampaign type distribution:")
         for row in type_dist:
-            print(f"  {row['campaign_type']}: {row['count']:,} campaigns, ${row['avg_cost']:,.2f} avg cost, {row['avg_quality_score']:.1f} avg QS, {row['total_conversions']:,} conversions")
+            print(f"  {row['campaign_type']}: {row['count']:,} campaigns, ${row['avg_cost']:,.2f} avg cost, {row['total_conversions']:,} conversions")
         
-        # Show bidding strategy performance
+        # Show status summary
         cursor.execute("""
             SELECT 
-                bidding_strategy,
+                status,
                 COUNT(*) as campaigns,
-                AVG(conversion_rate) as avg_conv_rate,
-                AVG(cost_per_conversion/100.0) as avg_cpa
+                SUM(cost) as total_cost,
+                AVG(CASE WHEN clicks > 0 THEN conversions::float / clicks * 100 ELSE 0 END) as avg_conv_rate
             FROM raw.google_ads_campaigns
-            WHERE conversions > 0
-            GROUP BY bidding_strategy
+            GROUP BY status
             ORDER BY campaigns DESC
         """)
-        bidding_summary = cursor.fetchall()
+        status_summary = cursor.fetchall()
         
-        print("\nBidding strategy performance:")
-        for row in bidding_summary:
-            print(f"  {row['bidding_strategy']}: {row['campaigns']:,} campaigns, {row['avg_conv_rate']:.2f}% conv rate, ${row['avg_cpa']:.2f} CPA")
+        print("\nCampaign status summary:")
+        for row in status_summary:
+            print(f"  {row['status']}: {row['campaigns']:,} campaigns, ${row['total_cost']:,.2f} total cost, {row['avg_conv_rate']:.2f}% conv rate")
 
 def main():
     """Main execution function"""
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Generate Google Ads campaigns data')
+    parser.add_argument('--force', action='store_true', 
+                        help='Force regeneration without prompting')
+    args = parser.parse_args()
+    
     print("=" * 60)
     print("Google Ads Campaign Generation")
     print(f"Environment: {current_env.name}")
@@ -310,12 +282,16 @@ def main():
     existing_count = db_helper.get_row_count('google_ads_campaigns')
     if existing_count > 0:
         print(f"\n⚠️  Warning: {existing_count:,} campaigns already exist")
-        response = input("Do you want to truncate and regenerate? (y/N): ")
-        if response.lower() == 'y':
+        if args.force:
+            print("Force flag set - truncating existing data...")
             db_helper.truncate_table('google_ads_campaigns')
         else:
-            print("Aborting...")
-            return
+            response = input("Do you want to truncate and regenerate? (y/N): ")
+            if response.lower() == 'y':
+                db_helper.truncate_table('google_ads_campaigns')
+            else:
+                print("Aborting...")
+                return
     
     # Generate campaigns
     campaigns = generate_google_campaigns()

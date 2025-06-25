@@ -92,27 +92,12 @@ def generate_hubspot_owners():
         owner = {
             'id': owner_id,
             'email': email,
-            'type': 'PERSON',
-            'first_name': first_name,
-            'last_name': last_name,
-            'user_id': owner_id * 1000,  # HubSpot user ID
-            'created_at': hire_date,
-            'updated_at': hire_date + timedelta(days=random.randint(1, 30)),
-            'archived': not is_active,
-            'teams': json.dumps([{
-                'id': TEAMS.index(team) + 1,
-                'name': team,
-                'primary': True
-            }]),
-            'signature': f"Best regards,\n{first_name} {last_name}\n{owner_type.replace('_', ' ').title()}\nBar Management Solutions",
-            'is_active': is_active,
-            'metadata': json.dumps({
-                'owner_type': owner_type,
-                'team': team,
-                'hire_date': hire_date.isoformat(),
-                'quota': 50 if owner_type == 'SALES_REP' else None,
-                'phone': fake.phone_number()
-            })
+            'firstname': first_name,
+            'lastname': last_name,
+            'userid': owner_id * 1000,  # HubSpot user ID
+            'createdat': hire_date,
+            'updatedat': hire_date + timedelta(days=random.randint(1, 30)),
+            'archived': not is_active
         }
         
         owners.append(owner)
@@ -121,25 +106,38 @@ def generate_hubspot_owners():
     system_owner = {
         'id': num_owners + 1,
         'email': 'system@barmanagement.com',
-        'type': 'SYSTEM',
-        'first_name': 'System',
-        'last_name': 'Automation',
-        'user_id': 999999,
-        'created_at': company_start_date,
-        'updated_at': company_start_date,
-        'archived': False,
-        'teams': json.dumps([]),
-        'signature': None,
-        'is_active': True,
-        'metadata': json.dumps({
-            'owner_type': 'SYSTEM',
-            'team': None,
-            'description': 'Automated system processes'
-        })
+        'firstname': 'System',
+        'lastname': 'Automation',
+        'userid': 999999,
+        'createdat': company_start_date,
+        'updatedat': company_start_date,
+        'archived': False
     }
     owners.append(system_owner)
     
     return owners
+
+def save_hubspot_owners_mapping(owners):
+    """Save HubSpot owners mapping for future reference."""
+    mapping = []
+    for owner in owners:
+        mapping.append({
+            'id': owner['id'],
+            'name': f"{owner['firstname']} {owner['lastname']}",
+            'email': owner['email'],
+            'is_active': not owner['archived']
+        })
+    
+    # Convert datetime objects to ISO format strings
+    serializable_mapping = []
+    for item in mapping:
+        item_copy = item.copy()
+        serializable_mapping.append(item_copy)
+    
+    with open('data/hubspot_owners_mapping.json', 'w') as f:
+        json.dump(serializable_mapping, f, indent=2)
+    
+    print(f"✓ Saved HubSpot owners mapping to data/hubspot_owners_mapping.json")
 
 def insert_hubspot_owners(owners):
     """Insert HubSpot owners into the database"""
@@ -154,57 +152,40 @@ def verify_hubspot_owners():
     count = db_helper.get_row_count('hubspot_owners')
     print(f"\n✓ Verification: {count:,} owners in database")
     
-    # Show team distribution
+    # Show active/archived distribution
     with db_helper.config.get_cursor(dict_cursor=True) as cursor:
         cursor.execute("""
             SELECT 
-                metadata->>'team' as team,
+                archived,
                 COUNT(*) as count
             FROM raw.hubspot_owners
-            WHERE metadata->>'team' IS NOT NULL
-            GROUP BY team
-            ORDER BY count DESC
+            GROUP BY archived
+            ORDER BY archived
         """)
-        team_dist = cursor.fetchall()
+        status_dist = cursor.fetchall()
         
-        print("\nOwner distribution by team:")
-        for row in team_dist:
-            print(f"  {row['team']}: {row['count']} owners")
-        
-        # Show owner type distribution
-        cursor.execute("""
-            SELECT 
-                metadata->>'owner_type' as owner_type,
-                COUNT(*) as count,
-                COUNT(CASE WHEN is_active THEN 1 END) as active_count
-            FROM raw.hubspot_owners
-            GROUP BY owner_type
-            ORDER BY count DESC
-        """)
-        type_dist = cursor.fetchall()
-        
-        print("\nOwner type distribution:")
-        for row in type_dist:
-            print(f"  {row['owner_type']}: {row['count']} total, {row['active_count']} active")
+        print("\nOwner status distribution:")
+        for row in status_dist:
+            status = 'Archived' if row['archived'] else 'Active'
+            print(f"  {status}: {row['count']} owners")
         
         # Show sample owners
         cursor.execute("""
             SELECT 
-                first_name,
-                last_name,
+                firstname,
+                lastname,
                 email,
-                metadata->>'owner_type' as owner_type,
-                metadata->>'team' as team
+                archived
             FROM raw.hubspot_owners
-            WHERE type = 'PERSON'
-            ORDER BY created_at DESC
+            WHERE archived = false
+            ORDER BY createdat DESC
             LIMIT 5
         """)
         samples = cursor.fetchall()
         
         print("\nSample owners (most recent hires):")
         for owner in samples:
-            print(f"  {owner['first_name']} {owner['last_name']} - {owner['owner_type']} - {owner['team']}")
+            print(f"  {owner['firstname']} {owner['lastname']} - {owner['email']}")
 
 def main():
     """Main execution function"""
@@ -229,6 +210,9 @@ def main():
     
     # Insert into database
     inserted = insert_hubspot_owners(owners)
+    
+    # Save mapping
+    save_hubspot_owners_mapping(owners)
     
     # Verify
     verify_hubspot_owners()

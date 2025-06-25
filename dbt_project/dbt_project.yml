@@ -36,6 +36,10 @@ models:
     mart:
       +materialized: table
       +schema: mart
+    
+    metrics:
+      +materialized: view
+      +schema: metrics
 
 tests:
   +store_failures: true

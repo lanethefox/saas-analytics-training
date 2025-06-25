@@ -21,11 +21,11 @@ time_ranges:
 
 # Account distribution
 accounts:
-  total: 150
+  total: 1000
   distribution:
     small:
       percentage: 0.70
-      count: 105
+      count: 700
       locations_min: 1
       locations_max: 2
       devices_per_location_min: 5
@@ -34,7 +34,7 @@ accounts:
       users_max: 5
     medium:
       percentage: 0.20
-      count: 30
+      count: 200
       locations_min: 3
       locations_max: 10
       devices_per_location_min: 10
@@ -43,7 +43,7 @@ accounts:
       users_max: 20
     large:
       percentage: 0.08
-      count: 12
+      count: 80
       locations_min: 10
       locations_max: 50
       devices_per_location_min: 20
@@ -52,7 +52,7 @@ accounts:
       users_max: 100
     enterprise:
       percentage: 0.02
-      count: 3
+      count: 20
       locations_min: 50
       locations_max: 100
       devices_per_location_min: 30
@@ -220,15 +220,15 @@ data_quality:
 
 # ID ranges for each entity type
 id_ranges:
-  accounts: [1, 150]
-  locations: [1, 1000]
-  devices: [1, 30000]
-  users: [1, 6000]
-  subscriptions: [1, 200]
-  tap_events: [1, 10000000]
-  feature_usage: [1, 1000000]
-  page_views: [1, 2000000]
-  user_sessions: [1, 500000]
+  accounts: [1, 1000]
+  locations: [1, 20000]
+  devices: [1, 300000]
+  users: [1, 50000]
+  subscriptions: [1, 1200]
+  tap_events: [1, 50000000]
+  feature_usage: [1, 5000000]
+  page_views: [1, 10000000]
+  user_sessions: [1, 2500000]
 
 # Growth patterns
 growth_patterns:

@@ -14,7 +14,6 @@ NC='\033[0m' # No Color
 
 # Configuration
 COMPOSE_FILE="docker-compose.yml"
-DATA_SIZE="small"
 SKIP_DATA_GEN=false
 
 # Parse arguments
@@ -23,10 +22,6 @@ while [[ $# -gt 0 ]]; do
         --full)
             COMPOSE_FILE="docker-compose.full.yml"
             shift
-            ;;
-        --size)
-            DATA_SIZE="$2"
-            shift 2
             ;;
         --skip-data)
             SKIP_DATA_GEN=true
@@ -37,9 +32,10 @@ while [[ $# -gt 0 ]]; do
             echo ""
             echo "Options:"
             echo "  --full          Use full stack including Airflow, MLflow, monitoring"
-            echo "  --size SIZE     Data generation size: tiny, small, medium, large (default: small)"
             echo "  --skip-data     Skip data generation"
             echo "  --help          Show this help message"
+            echo ""
+            echo "Note: Data generation now uses deterministic seed for consistency"
             exit 0
             ;;
         *)
@@ -177,11 +173,11 @@ sleep 5
 
 # Run data generation if not skipped
 if [[ "$SKIP_DATA_GEN" == false ]] && command -v python3 &> /dev/null; then
-    print_status "Generating complete dataset (scale: $DATA_SIZE)..."
+    print_status "Generating deterministic dataset..."
     
-    # Use the unified data generation script
-    if [[ -f "scripts/generate_all_data.py" ]]; then
-        python3 scripts/generate_all_data.py --scale "$DATA_SIZE" || {
+    # Use the deterministic data generation script
+    if [[ -f "scripts/generate_all_deterministic.py" ]]; then
+        python3 scripts/generate_all_deterministic.py || {
             print_warning "Data generation failed. Check logs for details."
         }
     else

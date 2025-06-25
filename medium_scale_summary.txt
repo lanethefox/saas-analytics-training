@@ -1,0 +1,73 @@
+===============================================================
+        MEDIUM SCALE DATA GENERATION SUMMARY
+           Database: saas_platform_dev
+           Generated: 2025-06-24
+===============================================================
+
+DATA SCALE ACHIEVED
+===================
+✅ 100% table coverage (30/30 raw tables populated)
+✅ Total records: 7,955,509 
+✅ Key metrics:
+   - Accounts: 40,000 (40K target)
+   - Users: 120,000 
+   - Devices: 180,000
+   - Locations: 61,644
+
+LARGE VOLUME TABLES
+===================
+1. Tap Events: 3,500,000 records
+   - Tracking beer pours across all locations
+   - Average 97 events per device per day
+   
+2. Stripe Events: 1,278,448 records
+   - Complete billing event history
+   - All subscription lifecycle events
+
+3. Feature Usage: 958,888 records
+   - User interaction tracking
+   - 24 different features monitored
+
+4. Page Views: 508,992 records
+   - Web analytics data
+   - Average 10.2 pages per session
+
+5. Stripe Invoices: 306,158 records
+   - Full billing history
+   - ~7.6 invoices per account average
+
+6. Stripe Charges: 290,743 records
+   - 95% payment success rate
+   - Payment method distribution tracked
+
+KEY BUSINESS METRICS
+====================
+- Active Subscriptions: 32,896
+- Monthly Recurring Revenue: ~$2.5M
+- HubSpot Companies: 40,025
+- HubSpot Contacts: 159,913
+- Marketing Campaigns: 5,734 total
+- Attribution Touchpoints: 15,000
+
+PERFORMANCE NOTES
+=================
+- Generation time: ~20 minutes (with timeouts)
+- Tap events generation: ~14K records/second
+- All generators support --force flag for automation
+- Environment scaling issue noted (defaults to production)
+
+NEXT STEPS
+==========
+1. Run DBT build to create derived models:
+   dbt build
+
+2. Validate data quality:
+   python3 scripts/validate_setup.py
+
+3. Test application connectivity
+
+The medium scale dataset provides realistic volumes for:
+- Integration testing
+- Performance benchmarking  
+- Demo environments
+- Training datasets

@@ -36,16 +36,23 @@ def wipe_all_data():
     cursor = conn.cursor()
     
     try:
-        # Disable foreign key checks
-        cursor.execute("SET session_replication_role = 'replica';")
+        # Try to disable foreign key checks if we have permission
+        try:
+            cursor.execute("SET session_replication_role = 'replica';")
+            replica_mode = True
+        except psycopg2.errors.InsufficientPrivilege:
+            # If we don't have permission, we'll use CASCADE which handles dependencies
+            replica_mode = False
+            conn.rollback()  # Clear the error state
         
         # Truncate each table
         for table in tables:
             print(f"Truncating raw.{table}...")
             cursor.execute(f"TRUNCATE TABLE raw.{table} CASCADE;")
         
-        # Re-enable foreign key checks
-        cursor.execute("SET session_replication_role = 'origin';")
+        # Re-enable foreign key checks if we disabled them
+        if replica_mode:
+            cursor.execute("SET session_replication_role = 'origin';")
         
         conn.commit()
         print("\n✅ All data wiped successfully!")

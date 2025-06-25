@@ -12,8 +12,8 @@ device_summary as (
     select
         location_id,
         count(*) as total_devices,
-        count(case when status = 'online' then 1 end) as active_devices,
-        count(case when status = 'online' then 1 end) as online_devices,
+        count(case when operational_status = 'operational' then 1 end) as active_devices,
+        count(case when operational_status = 'operational' then 1 end) as online_devices,
         min(device_created_at) as first_device_installed,
         max(device_created_at) as latest_device_installed,
         max(device_created_at) as last_maintenance_performed,

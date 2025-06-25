@@ -15,30 +15,25 @@ echo "===================="
 echo ""
 
 # Default values
-SIZE="small"
 CLEAR="true"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --size)
-            SIZE="$2"
-            shift 2
-            ;;
         --no-clear)
             CLEAR="false"
             shift
             ;;
         *)
             echo "Unknown option: $1"
-            echo "Usage: $0 [--size tiny|small|medium|large] [--no-clear]"
+            echo "Usage: $0 [--no-clear]"
             exit 1
             ;;
     esac
 done
 
 echo -e "${YELLOW}⚠️  This will delete all existing data!${NC}"
-echo "Size: $SIZE"
+echo "Using deterministic data generation"
 echo ""
 read -p "Continue? (y/N) " -n 1 -r
 echo ""
@@ -59,12 +54,12 @@ else
     DB_HOST="localhost"
 fi
 
-# Run data generation script
+# Run deterministic data generation
 echo ""
-echo "🏗️  Generating new data..."
+echo "🏗️  Generating deterministic data..."
 
 if command -v python3 &> /dev/null; then
-    python3 scripts/generate_data.py --size "$SIZE" --host "$DB_HOST" --clear
+    python3 scripts/generate_all_deterministic.py
 else
     echo -e "${RED}❌ Python 3 not found. Please install Python 3.8+${NC}"
     exit 1

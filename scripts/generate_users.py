@@ -21,6 +21,15 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from scripts.database_config import db_helper
 from scripts.config_loader import DataGenerationConfig, IDAllocator
 
+import os
+
+def should_truncate():
+    """Check if we should auto-truncate in Docker environment"""
+    if os.environ.get('DOCKER_ENV', 'false').lower() == 'true':
+        return True
+    response = input("Do you want to truncate and regenerate? (y/N): ")
+    return response.lower() == 'y'
+
 # Initialize configuration
 config = DataGenerationConfig()
 id_allocator = IDAllocator(config)
@@ -329,26 +338,33 @@ def verify_users():
         
         # Account size vs user count
         cursor.execute("""
+            WITH account_data AS (
+                SELECT 
+                    a.id,
+                    CASE 
+                        WHEN a.id::integer <= 105 THEN 'small'
+                        WHEN a.id::integer <= 135 THEN 'medium'
+                        WHEN a.id::integer <= 147 THEN 'large'
+                        ELSE 'enterprise'
+                    END as size
+                FROM raw.app_database_accounts a
+            )
             SELECT 
-                CASE 
-                    WHEN a.id <= 105 THEN 'small'
-                    WHEN a.id <= 135 THEN 'medium'
-                    WHEN a.id <= 147 THEN 'large'
-                    ELSE 'enterprise'
-                END as size,
+                ad.size,
                 COUNT(DISTINCT a.id) as accounts,
                 COUNT(u.id) as total_users,
                 ROUND(AVG(user_count), 1) as avg_users_per_account
             FROM raw.app_database_accounts a
+            JOIN account_data ad ON a.id = ad.id
             JOIN (
                 SELECT customer_id, COUNT(*) as user_count
                 FROM raw.app_database_users
                 GROUP BY customer_id
             ) uc ON a.id = uc.customer_id
             LEFT JOIN raw.app_database_users u ON a.id = u.customer_id
-            GROUP BY size
+            GROUP BY ad.size
             ORDER BY 
-                CASE size
+                CASE ad.size
                     WHEN 'small' THEN 1
                     WHEN 'medium' THEN 2
                     WHEN 'large' THEN 3
@@ -372,8 +388,7 @@ def main():
     existing_count = db_helper.get_row_count('app_database_users')
     if existing_count > 0:
         print(f"\n⚠️  Warning: {existing_count} users already exist")
-        response = input("Do you want to truncate and regenerate? (y/N): ")
-        if response.lower() == 'y':
+        if should_truncate():
             db_helper.truncate_table('app_database_users')
         else:
             print("Aborting...")

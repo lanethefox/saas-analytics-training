@@ -19,18 +19,11 @@ if errorlevel 1 (
 )
 
 REM Parse command line arguments
-set "SIZE=small"
 set "SKIP_DATA=false"
 set "COMPOSE_FILE=docker-compose.yml"
 
 :parse_args
 if "%~1"=="" goto :done_parsing
-if /i "%~1"=="--size" (
-    set "SIZE=%~2"
-    shift
-    shift
-    goto :parse_args
-)
 if /i "%~1"=="--skip-data" (
     set "SKIP_DATA=true"
     shift
@@ -49,7 +42,7 @@ goto :parse_args
 :done_parsing
 
 echo Starting setup with:
-echo - Dataset size: %SIZE%
+echo - Using deterministic data generation
 echo - Skip data generation: %SKIP_DATA%
 echo - Compose file: %COMPOSE_FILE%
 echo.
@@ -85,7 +78,7 @@ echo PostgreSQL is ready!
 REM Generate data if not skipped
 if "%SKIP_DATA%"=="false" (
     echo.
-    echo Generating educational data (size: %SIZE%)...
+    echo Generating deterministic data...
     
     REM Check if Python is available
     python --version >nul 2>&1
@@ -101,8 +94,8 @@ if "%SKIP_DATA%"=="false" (
     echo Installing Python dependencies...
     pip install -r requirements.txt >nul 2>&1
     
-    REM Run data generation
-    python scripts/generate_all_data.py --scale %SIZE%
+    REM Run deterministic data generation
+    python scripts/generate_all_deterministic.py
     if errorlevel 1 (
         echo ERROR: Data generation failed!
         pause
@@ -156,7 +149,6 @@ echo.
 echo Usage: setup.bat [options]
 echo.
 echo Options:
-echo   --size SIZE         Dataset size (xs, small, medium, large) [default: small]
 echo   --skip-data         Skip data generation step
 echo   --full              Use full stack with all services
 echo   --help              Show this help message

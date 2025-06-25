@@ -18,13 +18,27 @@ sources:
         identifier: hubspot_companies
         description: "Business entity records"
         columns:
-          - name: company_id
+          - name: id
             description: "HubSpot company ID"
             tests:
               - unique
               - not_null
           - name: name
             description: "Company name"
+          - name: properties
+            description: "Company properties (JSON)"
+          - name: business_type
+            description: "Type of business"
+          - name: location_count
+            description: "Number of locations"
+          - name: created_date
+            description: "Creation date"
+          - name: createdat
+            description: "Creation timestamp"
+          - name: updatedat
+            description: "Last update timestamp"
+          - name: archived
+            description: "Archive status"
           - name: domain
             description: "Company domain"
           - name: industry
@@ -36,23 +50,29 @@ sources:
         identifier: hubspot_contacts
         description: "Individual prospect and customer contacts"
         columns:
-          - name: contact_id
+          - name: id
             description: "HubSpot contact ID"
             tests:
               - unique
               - not_null
           - name: email
             description: "Contact email address"
-          - name: first_name
+          - name: firstname
             description: "Contact first name"
-          - name: last_name
+          - name: lastname
             description: "Contact last name"
-          - name: company_id
-            description: "Associated company ID"
-            tests:
-              - relationships:
-                  to: source('hubspot', 'companies')
-                  field: company_id
+          - name: company
+            description: "Associated company name"
+          - name: phone
+            description: "Contact phone"
+          - name: properties
+            description: "Contact properties (JSON)"
+          - name: createdat
+            description: "Creation timestamp"
+          - name: updatedat
+            description: "Last update timestamp"
+          - name: archived
+            description: "Archive status"
           - name: created_at
             description: "Contact creation timestamp"
 
@@ -60,23 +80,31 @@ sources:
         identifier: hubspot_deals
         description: "Sales pipeline opportunities"
         columns:
-          - name: deal_id
+          - name: id
             description: "HubSpot deal ID"
             tests:
               - unique
               - not_null
-          - name: deal_name
+          - name: dealname
             description: "Deal name"
           - name: amount
             description: "Deal value"
-          - name: stage
+          - name: dealstage
             description: "Deal stage"
-          - name: contact_id
-            description: "Associated contact ID"
-            tests:
-              - relationships:
-                  to: source('hubspot', 'contacts')
-                  field: contact_id
+          - name: pipeline
+            description: "Sales pipeline"
+          - name: closedate
+            description: "Expected close date"
+          - name: properties
+            description: "Deal properties (JSON)"
+          - name: associations
+            description: "Deal associations (JSON)"
+          - name: createdat
+            description: "Creation timestamp"
+          - name: updatedat
+            description: "Last update timestamp"
+          - name: archived
+            description: "Archive status"
           - name: created_at
             description: "Deal creation timestamp"
 
@@ -84,93 +112,74 @@ sources:
         identifier: hubspot_engagements
         description: "Interaction history (calls, emails, meetings)"
         columns:
-          - name: engagement_id
+          - name: id
             description: "HubSpot engagement ID"
             tests:
               - unique
               - not_null
-          - name: contact_id
-            description: "Associated contact ID"
-            tests:
-              - relationships:
-                  to: source('hubspot', 'contacts')
-                  field: contact_id
-          - name: engagement_type
-            description: "Type of engagement (call, email, meeting, etc.)"
-          - name: timestamp
-            description: "Engagement timestamp"
-
-      # Email Marketing
-      - name: email_events
-        identifier: email_events
-        description: "Email engagement tracking"
-        columns:
-          - name: event_id
-            description: "Email event ID"
-            tests:
-              - unique
-              - not_null
-          - name: contact_id
-            description: "Associated contact ID"
-            tests:
-              - relationships:
-                  to: source('hubspot', 'contacts')
-                  field: contact_id
-          - name: event_type
-            description: "Event type (sent, delivered, opened, etc.)"
-          - name: timestamp
-            description: "Event timestamp"
+          - name: engagement
+            description: "Engagement details (JSON)"
+          - name: associations
+            description: "Associated records (JSON)"
+          - name: metadata
+            description: "Engagement metadata (JSON)"
+          - name: createdat
+            description: "Creation timestamp"
+          - name: updatedat
+            description: "Last update timestamp"
       
       # User Management
       - name: owners
         identifier: hubspot_owners
         description: "HubSpot users/owners for assignment tracking"
         columns:
-          - name: owner_id
+          - name: id
             description: "HubSpot owner ID"
             tests:
               - unique
               - not_null
           - name: email
             description: "Owner email address"
-          - name: first_name
+          - name: firstname
             description: "Owner first name"
-          - name: last_name
+          - name: lastname
             description: "Owner last name"
-          - name: type
-            description: "Owner type (user, team, etc.)"
-          - name: created_at
-            description: "Owner creation timestamp"
+          - name: userid
+            description: "User ID"
+          - name: createdat
+            description: "Creation timestamp"
+          - name: updatedat
+            description: "Last update timestamp"
+          - name: archived
+            description: "Archive status"
       
       # Support Tickets
       - name: tickets
         identifier: hubspot_tickets
         description: "Customer support tickets"
         columns:
-          - name: ticket_id
+          - name: id
             description: "HubSpot ticket ID"
             tests:
               - unique
               - not_null
           - name: subject
             description: "Ticket subject"
-          - name: status
-            description: "Ticket status"
-          - name: priority
+          - name: content
+            description: "Ticket content"
+          - name: hs_pipeline
+            description: "Ticket pipeline"
+          - name: hs_pipeline_stage
+            description: "Pipeline stage"
+          - name: hs_ticket_priority
             description: "Ticket priority"
-          - name: contact_id
-            description: "Associated contact ID"
-            tests:
-              - relationships:
-                  to: source('hubspot', 'contacts')
-                  field: contact_id
-          - name: owner_id
-            description: "Assigned owner ID"
-            tests:
-              - relationships:
-                  to: source('hubspot', 'owners')
-                  field: owner_id
-          - name: created_at
-            description: "Ticket creation timestamp"
-          - name: closed_at
-            description: "Ticket closure timestamp"
+          - name: properties
+            description: "Ticket properties (JSON)"
+          - name: associations
+            description: "Associated records (JSON)"
+          - name: createdate
+            description: "Creation date"
+          - name: hs_lastmodifieddate
+            description: "Last modified date"
+          - name: archived
+            description: "Archive status"

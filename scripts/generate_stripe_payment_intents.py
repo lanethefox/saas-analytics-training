@@ -13,6 +13,7 @@ import sys
 import os
 import json
 import random
+import uuid
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
@@ -35,6 +36,55 @@ FAILURE_REASONS = [
     'expired_card',
     'incorrect_cvc'
 ]
+
+def generate_minimal_payment_intents():
+    """Generate a minimal set of payment intents when no charges exist"""
+    payment_intents = []
+    
+    # Generate 50 minimal payment intents
+    for i in range(50):
+        created_at = datetime.utcnow() - timedelta(days=random.randint(0, 90))
+        
+        # Random status distribution
+        status_rand = random.random()
+        if status_rand < 0.75:
+            status = 'succeeded'
+        elif status_rand < 0.90:
+            status = 'processing'
+        elif status_rand < 0.95:
+            status = 'requires_payment_method'
+        else:
+            status = 'canceled'
+        
+        # Random amount (in cents)
+        amount = random.choice([2900, 4900, 9900, 14900, 24900]) * 100  # Common subscription amounts
+        
+        payment_intent = {
+            'id': f'pi_minimal_{uuid.uuid4().hex[:16]}',
+            'amount': amount,
+            'amount_capturable': 0,
+            'amount_received': amount if status == 'succeeded' else 0,
+            'capture_method': 'automatic',
+            'charges': json.dumps({'data': []}),  # Empty charges array
+            'confirmation_method': 'automatic',
+            'created': created_at,
+            'currency': 'usd',
+            'customer': f'cus_{uuid.uuid4().hex[:14]}',
+            'description': f'Minimal payment intent for testing',
+            'invoice': None,
+            'metadata': json.dumps({'source': 'minimal_generator'}),
+            'payment_method': f'pm_{uuid.uuid4().hex[:16]}' if status != 'requires_payment_method' else None,
+            'payment_method_types': json.dumps(['card']),
+            'setup_future_usage': None,
+            'shipping': None,
+            'statement_descriptor': 'BARMANAGER PRO',
+            'status': status,
+            'created_at': created_at
+        }
+        
+        payment_intents.append(payment_intent)
+    
+    return payment_intents
 
 def load_stripe_charges():
     """Load Stripe charges to create corresponding payment intents"""
@@ -117,7 +167,12 @@ def generate_payment_intent_for_charge(charge):
     }]
     
     # Get metadata
-    metadata = charge['metadata'] if isinstance(charge['metadata'], dict) else json.loads(charge['metadata'])
+    if charge['metadata'] is None:
+        metadata = {}
+    elif isinstance(charge['metadata'], dict):
+        metadata = charge['metadata']
+    else:
+        metadata = json.loads(charge['metadata'])
     
     payment_intent = {
         'id': pi_id,
@@ -160,12 +215,10 @@ def generate_payment_intent_for_charge(charge):
             }
         }),
         'payment_method_types': json.dumps([payment_method_type]),
-        'processing': None,
         'receipt_email': None,
         'review': None,
         'setup_future_usage': None,
         'shipping': None,
-        'source': None,
         'statement_descriptor': None,
         'statement_descriptor_suffix': None,
         'status': status,
@@ -257,27 +310,35 @@ def main():
     print(f"Environment: {current_env.name}")
     print("=" * 60)
     
+    # Check for force flag
+    force_mode = '--force' in sys.argv
+    
     # Check if payment intents already exist
     existing_count = db_helper.get_row_count('stripe_payment_intents')
     if existing_count > 0:
         print(f"\n⚠️  Warning: {existing_count:,} payment intents already exist")
-        response = input("Do you want to truncate and regenerate? (y/N): ")
-        if response.lower() == 'y':
+        if force_mode:
+            print("Force mode enabled - truncating existing data...")
             db_helper.truncate_table('stripe_payment_intents')
         else:
-            print("Aborting...")
-            return
+            response = input("Do you want to truncate and regenerate? (y/N): ")
+            if response.lower() == 'y':
+                db_helper.truncate_table('stripe_payment_intents')
+            else:
+                print("Aborting...")
+                return
     
     # Load charges
     charges = load_stripe_charges()
     print(f"\n✓ Loaded {len(charges):,} Stripe charges")
     
     if not charges:
-        print("❌ No charges found. Please generate stripe_charges first.")
-        return
-    
-    # Generate payment intents
-    payment_intents = generate_stripe_payment_intents(charges)
+        print("⚠️  No charges found. Generating minimal payment intents for testing...")
+        # Generate a minimal set of payment intents for testing
+        payment_intents = generate_minimal_payment_intents()
+    else:
+        # Generate payment intents based on charges
+        payment_intents = generate_stripe_payment_intents(charges)
     
     # Insert into database
     inserted = insert_stripe_payment_intents(payment_intents)

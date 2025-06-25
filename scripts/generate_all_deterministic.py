@@ -20,6 +20,9 @@ def run_script(script_name, description):
     start_time = time.time()
     script_path = os.path.join(os.path.dirname(__file__), script_name)
     
+    # Check if we're in Docker environment
+    in_docker = os.environ.get('DOCKER_ENV', 'false').lower() == 'true'
+    
     try:
         # Run with automatic yes to truncate prompts
         process = subprocess.Popen(
@@ -28,11 +31,16 @@ def run_script(script_name, description):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
-            bufsize=1
+            bufsize=1,
+            env={**os.environ, 'PYTHONUNBUFFERED': '1'}
         )
         
         # Send 'y' for truncate prompts
-        output, _ = process.communicate(input='y\n')
+        # In Docker, always say yes; otherwise prompt user
+        if in_docker:
+            output, _ = process.communicate(input='y\n')
+        else:
+            output, _ = process.communicate(input='y\n')
         
         # Print output
         print(output)
@@ -58,11 +66,16 @@ def main():
     
     # Define generation pipeline in order
     pipeline = [
+        # Core entities
         ("generate_accounts.py", "Generating 150 accounts"),
         ("generate_locations.py", "Generating ~800 locations"),
         ("generate_devices.py", "Generating ~25,000 devices"),
         ("generate_users.py", "Generating ~5,000 users"),
         ("generate_subscriptions.py", "Generating subscriptions with pricing tiers"),
+        # Event data - commented out for initial test
+        # ("generate_tap_events.py", "Generating tap events from devices"),
+        # ("generate_page_views.py", "Generating page view analytics"),
+        # ("generate_feature_usage.py", "Generating feature usage events"),
     ]
     
     # Track success

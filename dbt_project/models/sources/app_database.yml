@@ -19,15 +19,31 @@ sources:
         identifier: app_database_accounts
         description: "Customer account records (companies/organizations)"
         columns:
-          - name: account_id
+          - name: id
             description: "Unique account identifier"
             tests:
               - unique
               - not_null
-          - name: account_name
+          - name: name
             description: "Customer account name"
-          - name: account_type
-            description: "Type of account (Business, Professional, Enterprise)"
+          - name: email
+            description: "Account email"
+          - name: business_type
+            description: "Type of business"
+          - name: location_count
+            description: "Number of locations"
+          - name: industry
+            description: "Industry classification"
+          - name: employee_count
+            description: "Number of employees"
+          - name: annual_revenue
+            description: "Annual revenue"
+          - name: website
+            description: "Company website"
+          - name: status
+            description: "Account status"
+          - name: created_date
+            description: "Account creation date"
           - name: created_at
             description: "Account creation timestamp"
 
@@ -35,18 +51,18 @@ sources:
         identifier: app_database_users
         description: "Individual user profiles with role-based access"
         columns:
-          - name: user_id
+          - name: id
             description: "Unique user identifier"
             tests:
               - unique
               - not_null
-          - name: account_id
+          - name: customer_id
             description: "Foreign key to accounts"
             tests:
               - not_null
               - relationships:
                   to: source('app_database', 'accounts')
-                  field: account_id
+                  field: id
           - name: email
             description: "User email address"
           - name: first_name
@@ -60,19 +76,19 @@ sources:
         identifier: app_database_locations
         description: "Individual bar/restaurant locations within accounts"
         columns:
-          - name: location_id
+          - name: id
             description: "Unique location identifier"
             tests:
               - unique
               - not_null
-          - name: account_id
+          - name: customer_id
             description: "Foreign key to accounts"
             tests:
               - not_null
               - relationships:
                   to: source('app_database', 'accounts')
-                  field: account_id
-          - name: location_name
+                  field: id
+          - name: name
             description: "Location display name"
           - name: address
             description: "Physical address"
@@ -89,7 +105,7 @@ sources:
         identifier: app_database_devices
         description: "Physical IoT devices per location"
         columns:
-          - name: device_id
+          - name: id
             description: "Unique device identifier"
             tests:
               - unique
@@ -100,9 +116,7 @@ sources:
               - not_null
               - relationships:
                   to: source('app_database', 'locations')
-                  field: location_id
-          - name: device_name
-            description: "Device display name"
+                  field: id
           - name: device_type
             description: "Hardware type (POS, Scanner, etc.)"
           - name: status
@@ -114,18 +128,18 @@ sources:
         identifier: app_database_subscriptions
         description: "Subscription lifecycle management"
         columns:
-          - name: subscription_id
+          - name: id
             description: "Unique subscription identifier"
             tests:
               - unique
               - not_null
-          - name: account_id
+          - name: customer_id
             description: "Foreign key to accounts"
             tests:
               - not_null
               - relationships:
                   to: source('app_database', 'accounts')
-                  field: account_id
+                  field: id
           - name: plan_name
             description: "Subscription plan name"
           - name: status
@@ -138,7 +152,7 @@ sources:
         identifier: app_database_tap_events
         description: "Real-time tap monitoring events and sensor data"
         columns:
-          - name: event_id
+          - name: id
             description: "Unique event identifier"
             tests:
               - unique
@@ -149,13 +163,14 @@ sources:
               - not_null
               - relationships:
                   to: source('app_database', 'devices')
-                  field: device_id
-          - name: user_id
-            description: "Foreign key to users"
+                  field: id
+          - name: location_id
+            description: "Foreign key to locations"
             tests:
+              - not_null
               - relationships:
-                  to: source('app_database', 'users')
-                  field: user_id
+                  to: source('app_database', 'locations')
+                  field: id
           - name: event_type
             description: "Type of tap event"
           - name: timestamp

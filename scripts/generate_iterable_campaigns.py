@@ -15,6 +15,7 @@ import os
 import json
 import random
 import uuid
+import argparse
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from faker import Faker
@@ -236,58 +237,26 @@ def generate_iterable_campaigns():
             conversions = 0
             revenue = 0
         
-        # A/B testing
+        # A/B testing flag
         is_ab_test = random.random() < 0.3  # 30% of campaigns have A/B tests
+        
+        # Generate labels
+        labels = [campaign_type.lower(), segment.lower().replace(' ', '_')]
         if is_ab_test:
-            variants = {
-                'A': {'subject': subject_line, 'winner': random.random() < 0.5},
-                'B': {'subject': subject_line.replace('!', '?'), 'winner': random.random() < 0.5}
-            }
-            # Ensure at least one winner
-            if not any(v['winner'] for v in variants.values()):
-                variants['A']['winner'] = True
-        else:
-            variants = None
+            labels.append('ab_test')
         
         campaign = {
             'id': campaign_id,
             'name': f"{campaign_type} - {segment} - {send_date.strftime('%Y-%m-%d')}",
-            'type': campaign_type,
+            'campaign_type': campaign_type,
             'status': status,
-            'created_at': send_date - timedelta(days=random.randint(1, 7)),
-            'updated_at': send_date,
-            'scheduled_at': send_date if status in ['SCHEDULED', 'SENT'] else None,
-            'sent_at': send_date if status == 'SENT' else None,
-            'from_name': 'BarManager Pro Team',
-            'from_email': 'hello@barmanagerpro.com',
-            'reply_to': 'support@barmanagerpro.com',
-            'subject_line': subject_line,
-            'preview_text': fake.sentence(nb_words=10),
-            'segment_id': f"seg_{random.randint(1000, 9999)}",
-            'segment_name': segment,
-            'list_size': list_size,
-            'sends_requested': list_size,
-            'sends_successful': sends_successful,
-            'bounces': list_size - sends_successful if sends_successful > 0 else 0,
-            'unique_opens': unique_opens,
-            'total_opens': total_opens,
-            'open_rate': round(unique_opens / sends_successful * 100, 2) if sends_successful > 0 else 0,
-            'unique_clicks': unique_clicks,
-            'total_clicks': total_clicks,
-            'click_rate': round(unique_clicks / sends_successful * 100, 2) if sends_successful > 0 else 0,
-            'click_to_open_rate': round(unique_clicks / unique_opens * 100, 2) if unique_opens > 0 else 0,
-            'unsubscribes': unsubscribes,
-            'unsubscribe_rate': round(unsubscribes / sends_successful * 100, 3) if sends_successful > 0 else 0,
-            'complaints': complaints,
-            'complaint_rate': round(complaints / sends_successful * 100, 4) if sends_successful > 0 else 0,
-            'conversions': conversions,
-            'conversion_rate': round(conversions / unique_clicks * 100, 2) if unique_clicks > 0 else 0,
-            'revenue': revenue,  # In cents
-            'ab_test': is_ab_test,
-            'ab_test_variants': json.dumps(variants) if variants else None,
-            'template_id': f"tmpl_{random.randint(100, 999)}",
-            'workflow_id': f"wf_{random.randint(100, 999)}" if campaign_type == 'ONBOARDING' else None,
-            'tags': json.dumps(random.sample(['monthly', 'product', 'sales', 'feature', 'newsletter'], k=random.randint(1, 3)))
+            'created_at_source': send_date - timedelta(days=random.randint(1, 7)),
+            'updated_at_source': send_date - timedelta(days=random.randint(0, 1)),
+            'start_at': send_date if status in ['SCHEDULED', 'SENT'] else None,
+            'ended_at': send_date + timedelta(hours=random.randint(1, 24)) if status == 'SENT' else None,
+            'send_size': sends_successful if status == 'SENT' else list_size,
+            'message_medium': 'EMAIL',
+            'labels': ', '.join(labels)
         }
         
         campaigns.append(campaign)
@@ -321,43 +290,45 @@ def verify_iterable_campaigns():
     with db_helper.config.get_cursor(dict_cursor=True) as cursor:
         cursor.execute("""
             SELECT 
-                type,
+                campaign_type as type,
                 COUNT(*) as count,
-                AVG(open_rate) as avg_open_rate,
-                AVG(click_rate) as avg_click_rate,
-                SUM(revenue)/100.0 as total_revenue
+                SUM(send_size) as total_sent,
+                AVG(send_size) as avg_send_size
             FROM raw.iterable_campaigns
             WHERE status = 'SENT'
-            GROUP BY type
+            GROUP BY campaign_type
             ORDER BY count DESC
         """)
         type_dist = cursor.fetchall()
         
-        print("\nCampaign type performance:")
+        print("\nCampaign type distribution:")
         for row in type_dist:
-            print(f"  {row['type']}: {row['count']:,} sent, {row['avg_open_rate']:.1f}% open, {row['avg_click_rate']:.1f}% click, ${row['total_revenue']:,.2f} revenue")
+            print(f"  {row['type']}: {row['count']:,} campaigns, {row['total_sent']:,} emails sent, {row['avg_send_size']:,.0f} avg send size")
         
-        # Show monthly send volume
+        # Show status distribution
         cursor.execute("""
             SELECT 
-                DATE_TRUNC('month', sent_at) as month,
+                status,
                 COUNT(*) as campaigns,
-                SUM(sends_successful) as emails_sent,
-                AVG(open_rate) as avg_open_rate
+                SUM(send_size) as total_send_size
             FROM raw.iterable_campaigns
-            WHERE sent_at IS NOT NULL
-            GROUP BY month
-            ORDER BY month DESC
-            LIMIT 6
+            GROUP BY status
+            ORDER BY campaigns DESC
         """)
-        monthly_stats = cursor.fetchall()
+        status_stats = cursor.fetchall()
         
-        print("\nRecent monthly email volume:")
-        for row in monthly_stats:
-            print(f"  {row['month'].strftime('%Y-%m')}: {row['campaigns']:,} campaigns, {row['emails_sent']:,} emails, {row['avg_open_rate']:.1f}% avg open")
+        print("\nCampaign status distribution:")
+        for row in status_stats:
+            print(f"  {row['status']}: {row['campaigns']:,} campaigns, {row['total_send_size']:,} total send size")
 
 def main():
     """Main execution function"""
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Generate Iterable campaigns data')
+    parser.add_argument('--force', action='store_true', 
+                        help='Force regeneration without prompting')
+    args = parser.parse_args()
+    
     print("=" * 60)
     print("Iterable Email Campaign Generation")
     print(f"Environment: {current_env.name}")
@@ -367,12 +338,16 @@ def main():
     existing_count = db_helper.get_row_count('iterable_campaigns')
     if existing_count > 0:
         print(f"\n⚠️  Warning: {existing_count:,} campaigns already exist")
-        response = input("Do you want to truncate and regenerate? (y/N): ")
-        if response.lower() == 'y':
+        if args.force:
+            print("Force flag set - truncating existing data...")
             db_helper.truncate_table('iterable_campaigns')
         else:
-            print("Aborting...")
-            return
+            response = input("Do you want to truncate and regenerate? (y/N): ")
+            if response.lower() == 'y':
+                db_helper.truncate_table('iterable_campaigns')
+            else:
+                print("Aborting...")
+                return
     
     # Generate campaigns
     campaigns = generate_iterable_campaigns()

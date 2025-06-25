@@ -25,6 +25,13 @@ locations as (
     from {{ ref('stg_app_database__locations') }}
 ),
 
+devices_deduped as (
+    select distinct on (device_id)
+        *
+    from devices_health
+    order by device_id, _int_updated_at desc  -- Keep the most recent record for each device
+),
+
 final as (
     select
         -- Primary identifiers
@@ -170,7 +177,7 @@ final as (
         dh.latest_event_timestamp as last_activity_at,
         current_timestamp as _entity_updated_at
         
-    from devices_health dh
+    from devices_deduped dh
     left join locations loc on dh.location_id = loc.location_id
 )
 
