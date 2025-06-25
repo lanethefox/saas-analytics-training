@@ -1,0 +1,255 @@
+# Data Generation Configuration
+# This file defines all parameters for deterministic data generation
+
+# Random seed for reproducibility
+random_seed: 42
+
+# Business simulation parameters
+business_name: "TapFlow Analytics"
+business_model: "B2B SaaS beverage dispensing platform"
+
+# Time ranges
+time_ranges:
+  start_date: "2020-01-01"
+  end_date: "2025-06-25"
+  business_hours:
+    start: 6
+    end: 23
+  peak_hours:
+    lunch: [11, 14]
+    dinner: [18, 23]
+
+# Account distribution
+accounts:
+  total: 150
+  distribution:
+    small:
+      percentage: 0.70
+      count: 105
+      locations_min: 1
+      locations_max: 2
+      devices_per_location_min: 5
+      devices_per_location_max: 10
+      users_min: 2
+      users_max: 5
+    medium:
+      percentage: 0.20
+      count: 30
+      locations_min: 3
+      locations_max: 10
+      devices_per_location_min: 10
+      devices_per_location_max: 20
+      users_min: 5
+      users_max: 20
+    large:
+      percentage: 0.08
+      count: 12
+      locations_min: 10
+      locations_max: 50
+      devices_per_location_min: 20
+      devices_per_location_max: 50
+      users_min: 20
+      users_max: 100
+    enterprise:
+      percentage: 0.02
+      count: 3
+      locations_min: 50
+      locations_max: 100
+      devices_per_location_min: 30
+      devices_per_location_max: 100
+      users_min: 100
+      users_max: 500
+
+# Industry distribution for accounts
+industries:
+  restaurant: 0.40
+  bar: 0.25
+  stadium: 0.10
+  hotel: 0.15
+  corporate: 0.10
+
+# Geographic distribution
+geographic_distribution:
+  northeast:
+    percentage: 0.40
+    states: ["NY", "MA", "CT", "NJ", "PA", "ME", "NH", "VT", "RI"]
+  west_coast:
+    percentage: 0.25
+    states: ["CA", "WA", "OR", "NV"]
+  southeast:
+    percentage: 0.20
+    states: ["FL", "GA", "NC", "SC", "VA", "TN"]
+  midwest:
+    percentage: 0.15
+    states: ["IL", "OH", "MI", "WI", "IN", "MO"]
+
+# Device configuration
+devices:
+  types:
+    tap_controller:
+      percentage: 0.60
+      category: "dispensing"
+      manufacturers: ["TapFlow Pro", "SmartTap", "FlowMaster"]
+      models: ["TC-1000", "TC-2000", "TC-3000"]
+    sensor:
+      percentage: 0.30
+      category: "monitoring"
+      manufacturers: ["SensorTech", "IoTFlow"]
+      models: ["TS-100", "TS-200", "PT-500"]
+    gateway:
+      percentage: 0.10
+      category: "networking"
+      manufacturers: ["NetFlow", "ConnectHub"]
+      models: ["GW-10", "GW-20"]
+  
+  operational_distribution:
+    online: 0.85
+    offline: 0.10
+    maintenance: 0.05
+  
+  health_score_distribution:
+    excellent: 0.70  # 0.9-1.0
+    good: 0.20      # 0.7-0.9
+    fair: 0.08      # 0.5-0.7
+    poor: 0.02      # <0.5
+
+# User roles
+user_roles:
+  admin:
+    percentage: 0.10
+    permissions: "full_access"
+  manager:
+    percentage: 0.30
+    permissions: "location_management"
+  staff:
+    percentage: 0.60
+    permissions: "operational_access"
+
+# Subscription tiers
+subscription_tiers:
+  starter:
+    name: "Starter"
+    monthly_price: 299
+    device_limit: 10
+    features: ["basic_analytics", "email_support"]
+  professional:
+    name: "Professional"
+    monthly_price: 999
+    device_limit: 50
+    features: ["advanced_analytics", "api_access", "phone_support"]
+  business:
+    name: "Business"
+    monthly_price: 2999
+    device_limit: 200
+    features: ["enterprise_analytics", "api_access", "priority_support", "custom_reports"]
+  enterprise:
+    name: "Enterprise"
+    monthly_price: 9999
+    device_limit: null  # unlimited
+    features: ["enterprise_analytics", "api_access", "dedicated_support", "custom_reports", "sla"]
+
+# Event generation parameters
+events:
+  tap_events:
+    # Events per device per day (varies by venue type)
+    restaurant:
+      min: 50
+      max: 200
+      peak_multiplier: 2.5
+    bar:
+      min: 100
+      max: 400
+      peak_multiplier: 3.0
+    stadium:
+      min: 200
+      max: 1000
+      peak_multiplier: 5.0
+    hotel:
+      min: 30
+      max: 150
+      peak_multiplier: 2.0
+    corporate:
+      min: 20
+      max: 80
+      peak_multiplier: 1.5
+  
+  volume_ml:
+    min: 20
+    max: 500
+    common_sizes: [150, 200, 300, 400, 500]  # Common pour sizes
+  
+  temperature_c:
+    normal_min: 2
+    normal_max: 6
+    anomaly_rate: 0.02
+  
+  pressure_psi:
+    normal_min: 10
+    normal_max: 15
+    anomaly_rate: 0.03
+  
+  flow_rate_ml_per_sec:
+    min: 10
+    max: 50
+
+# Feature usage patterns
+feature_usage:
+  dashboard_views:
+    admin_daily: [5, 20]
+    manager_daily: [2, 10]
+    staff_daily: [1, 5]
+  
+  report_generation:
+    weekly_rate: 0.8
+    monthly_rate: 0.95
+  
+  api_calls:
+    per_device_daily: [0.5, 2.0]
+
+# Data quality parameters
+data_quality:
+  null_rates:
+    optional_fields: 0.05
+    required_fields: 0.0
+  
+  validation_rules:
+    min_device_uptime: 0.75
+    min_location_operational: 0.70
+    max_mrr_variance: 0.05
+    max_orphaned_records: 0
+
+# ID ranges for each entity type
+id_ranges:
+  accounts: [1, 150]
+  locations: [1, 1000]
+  devices: [1, 30000]
+  users: [1, 6000]
+  subscriptions: [1, 200]
+  tap_events: [1, 10000000]
+  feature_usage: [1, 1000000]
+  page_views: [1, 2000000]
+  user_sessions: [1, 500000]
+
+# Growth patterns
+growth_patterns:
+  account_creation:
+    established: 0.20   # 2+ years ago
+    growing: 0.30      # 1-2 years ago
+    scaling: 0.30      # 6-12 months ago
+    new: 0.20          # <6 months ago
+  
+  monthly_growth_rate:
+    new_accounts: 0.10
+    device_expansion: 0.05
+    mrr_growth: 0.08
+  
+  churn_rate:
+    monthly: 0.025
+    reasons: ["pricing", "competition", "product_fit", "support"]
+
+# Maintenance patterns
+maintenance:
+  interval_days: 90
+  overdue_rate: 0.10
+  scheduled_rate: 0.85
+  emergency_rate: 0.05
