@@ -1,21 +1,19 @@
 #!/usr/bin/env python3
 """
-Generate synthetic subscriptions data for the bar management SaaS platform.
+Generate deterministic subscriptions data for the TapFlow Analytics platform.
 
-This module creates realistic subscription data with:
-- Subscription history for accounts  
-- Plan progression patterns (upgrades/downgrades)
-- Churn patterns (10% annual churn rate)
-- Trial conversions (70% trial-to-paid)
-- MRR matching account records
-- Controlled total subscription count (1.25x accounts)
+This module creates subscriptions with:
+- One active subscription per account
+- Pricing tiers based on device count from configuration
+- Historical subscriptions for growth patterns
+- Sequential IDs within reserved range (1-200)
+- Realistic churn and upgrade patterns
 """
 
 import sys
 import os
 import random
 import json
-import uuid
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from faker import Faker
@@ -23,33 +21,115 @@ from faker import Faker
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from scripts.database_config import db_helper
-from scripts.environment_config import current_env
+from scripts.config_loader import DataGenerationConfig, IDAllocator
 
-# Initialize Faker
+# Initialize configuration
+config = DataGenerationConfig()
+id_allocator = IDAllocator(config)
+
+# Initialize Faker with seed from config
 fake = Faker()
-Faker.seed(42)
-random.seed(42)
 
-# Subscription configuration
-SUBSCRIPTION_PLANS = {
-    'basic': {'mrr': 299, 'features': ['basic_analytics', 'device_monitoring']},
-    'pro': {'mrr': 999, 'features': ['advanced_analytics', 'device_monitoring', 'api_access']},
-    'enterprise': {'mrr': 2999, 'features': ['full_analytics', 'device_monitoring', 'api_access', 'white_label']}
-}
+def get_subscription_tier_for_account(account, device_count):
+    """Determine subscription tier based on device count"""
+    tiers = config.get_subscription_tiers()
+    
+    # Determine tier based on device count
+    if device_count <= tiers['starter']['device_limit']:
+        return 'starter'
+    elif device_count <= tiers['professional']['device_limit']:
+        return 'professional'
+    elif device_count <= tiers['business']['device_limit']:
+        return 'business'
+    else:
+        return 'enterprise'
 
-SUBSCRIPTION_STATUS = ['trialing', 'active', 'past_due', 'canceled', 'paused']
+def get_trial_duration(account_size):
+    """Get trial duration based on account size"""
+    if account_size == 'enterprise':
+        return 30  # Enterprise gets 30-day trials
+    elif account_size == 'large':
+        return 21  # Large gets 21-day trials
+    else:
+        return 14  # Standard 14-day trial
 
-# Annual churn rate 10% = ~0.87% monthly
-MONTHLY_CHURN_RATE = 0.0087
-TRIAL_CONVERSION_RATE = 0.70
-TRIAL_DURATION_DAYS = 14
+def calculate_account_device_count(account_id):
+    """Calculate total device count for an account"""
+    # Load device data to count devices per account
+    device_file = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)), 
+        'data', 
+        'generated_devices.json'
+    )
+    
+    # If devices haven't been generated yet, estimate based on account size
+    if not os.path.exists(device_file):
+        # Load account data
+        account_file = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)), 
+            'data', 
+            'generated_accounts.json'
+        )
+        with open(account_file, 'r') as f:
+            accounts = json.load(f)
+        
+        account = next(a for a in accounts if a['id'] == account_id)
+        size = account['account_size']
+        distribution = config.get_account_distribution()[size]
+        
+        # Estimate device count
+        locations = (distribution['locations_min'] + distribution['locations_max']) // 2
+        devices_per_loc = (distribution['devices_per_location_min'] + distribution['devices_per_location_max']) // 2
+        return locations * devices_per_loc
+    
+    # Count actual devices
+    with open(device_file, 'r') as f:
+        devices = json.load(f)
+    
+    return len([d for d in devices if d['customer_id'] == account_id])
 
-# Control subscription generation
-ACCOUNTS_WITH_HISTORY = 0.25  # 25% of accounts have plan change history
-MAX_SUBSCRIPTIONS_PER_ACCOUNT = 3  # Maximum subscription records per account
+def generate_subscription_history(account, current_tier, account_created):
+    """Generate subscription history showing growth"""
+    history = []
+    growth_patterns = config.get_growth_patterns()
+    
+    # Determine if this account has grown
+    account_age_months = (datetime.now() - account_created).days / 30
+    
+    if account_age_months > 12 and random.random() < 0.3:  # 30% of old accounts have upgraded
+        # Create previous subscription
+        if current_tier == 'enterprise':
+            previous_tier = 'business'
+        elif current_tier == 'business':
+            previous_tier = 'professional'
+        elif current_tier == 'professional':
+            previous_tier = 'starter'
+        else:
+            previous_tier = None
+        
+        if previous_tier:
+            # Previous subscription lasted 6-24 months
+            duration_months = random.randint(6, 24)
+            upgrade_date = datetime.now() - relativedelta(months=random.randint(3, 12))
+            start_date = upgrade_date - relativedelta(months=duration_months)
+            
+            # Ensure start date is after account creation
+            if start_date < account_created:
+                start_date = account_created + timedelta(days=14)  # After trial
+            
+            history.append({
+                'tier': previous_tier,
+                'start_date': start_date,
+                'end_date': upgrade_date,
+                'status': 'upgraded',
+                'reason': 'growth'
+            })
+    
+    return history
 
-def load_accounts():
-    """Load generated accounts from JSON file"""
+def generate_subscriptions():
+    """Generate deterministic subscription data"""
+    # Load accounts from the saved mapping
     mapping_file = os.path.join(
         os.path.dirname(os.path.dirname(__file__)), 
         'data', 
@@ -64,151 +144,117 @@ def load_accounts():
         acc['created_at'] = datetime.fromisoformat(acc['created_at'])
         acc['updated_at'] = datetime.fromisoformat(acc['updated_at'])
     
-    return accounts
-
-def generate_subscription_for_account(account, include_history=False):
-    """Generate subscription(s) for an account"""
     subscriptions = []
+    subscription_tiers = config.get_subscription_tiers()
     
-    # Start with a trial
-    trial_start = account['created_at'] + timedelta(days=random.randint(0, 7))
-    trial_end = trial_start + timedelta(days=TRIAL_DURATION_DAYS)
+    print(f"Generating subscriptions for {len(accounts)} accounts...")
     
-    # Determine if trial converts
-    converts = random.random() < TRIAL_CONVERSION_RATE
+    # Reset ID allocator for subscriptions
+    id_allocator.current_ids['subscriptions'] = 1
     
-    if not converts and include_history:
-        # Only include failed trials for accounts with history
-        trial_sub = {
-            'account_id': account['id'],
-            'plan': account['subscription_tier'],
-            'status': 'canceled',
-            'mrr': 0,
-            'start_date': trial_start,
-            'end_date': trial_end,
-            'is_trial': True,
-            'canceled_at': trial_end
-        }
-        subscriptions.append(trial_sub)
-        return subscriptions
-    
-    # For converting accounts
-    if converts:
-        current_plan = account['subscription_tier']
-        sub_start = trial_end
+    for account in accounts:
+        # Calculate device count for this account
+        device_count = calculate_account_device_count(account['id'])
         
-        # Check if account is still active
+        # Determine appropriate tier
+        tier = get_subscription_tier_for_account(account, device_count)
+        tier_config = subscription_tiers[tier]
+        
+        # Trial period
+        trial_duration = get_trial_duration(account['account_size'])
+        trial_start = account['created_at'] + timedelta(days=random.randint(0, 3))
+        trial_end = trial_start + timedelta(days=trial_duration)
+        
+        # Determine subscription status
         if account['is_active']:
-            # Active subscription
-            active_sub = {
-                'account_id': account['id'],
-                'plan': current_plan,
-                'status': 'active',
-                'mrr': SUBSCRIPTION_PLANS[current_plan]['mrr'],
-                'start_date': sub_start,
-                'end_date': None,
-                'is_trial': False,
-                'canceled_at': None
-            }
-            subscriptions.append(active_sub)
-            
-            # Add plan change history for some accounts
-            if include_history and random.random() < 0.3:
-                # Create a previous subscription (plan change)
-                old_plan = 'basic' if current_plan != 'basic' else 'pro'
-                old_sub_start = sub_start - relativedelta(months=random.randint(6, 24))
-                
-                old_sub = {
-                    'account_id': account['id'],
-                    'plan': old_plan,
-                    'status': 'canceled',
-                    'mrr': SUBSCRIPTION_PLANS[old_plan]['mrr'],
-                    'start_date': old_sub_start,
-                    'end_date': sub_start,
-                    'is_trial': False,
-                    'canceled_at': sub_start
-                }
-                subscriptions.insert(0, old_sub)  # Insert at beginning
+            status = 'active'
+            start_date = trial_end
+            end_date = None
+            canceled_at = None
         else:
-            # Canceled subscription
-            cancel_date = sub_start + relativedelta(months=random.randint(3, 36))
-            canceled_sub = {
-                'account_id': account['id'],
-                'plan': current_plan,
+            # Inactive accounts have canceled subscriptions
+            status = 'canceled'
+            start_date = trial_end
+            # Subscription lasted 3-36 months
+            duration_months = random.randint(3, 36)
+            end_date = start_date + relativedelta(months=duration_months)
+            # Ensure end date is in the past
+            if end_date > datetime.now():
+                end_date = datetime.now() - timedelta(days=random.randint(30, 180))
+            canceled_at = end_date
+        
+        # Generate subscription history
+        history = generate_subscription_history(account, tier, account['created_at'])
+        
+        # Add historical subscriptions
+        for hist in history:
+            hist_id = id_allocator.get_next_id('subscriptions')
+            hist_tier_config = subscription_tiers[hist['tier']]
+            
+            subscription = {
+                'id': hist_id,
+                'customer_id': account['id'],
+                'plan_name': hist['tier'],
                 'status': 'canceled',
-                'mrr': SUBSCRIPTION_PLANS[current_plan]['mrr'],
-                'start_date': sub_start,
-                'end_date': cancel_date,
-                'is_trial': False,
-                'canceled_at': cancel_date
+                'start_date': hist['start_date'],
+                'end_date': hist['end_date'],
+                'monthly_price': hist_tier_config['monthly_price'],
+                'billing_cycle': 'monthly',
+                'features': json.dumps(hist_tier_config['features']),
+                'device_limit': hist_tier_config['device_limit'],
+                'created_at': hist['start_date'],
+                'updated_at': hist['end_date'],
+                'canceled_at': hist['end_date'],
+                'cancellation_reason': hist['reason']
             }
-            subscriptions.append(canceled_sub)
+            subscriptions.append(subscription)
+        
+        # Add current/final subscription
+        sub_id = id_allocator.get_next_id('subscriptions')
+        
+        subscription = {
+            'id': sub_id,
+            'customer_id': account['id'],
+            'plan_name': tier,
+            'status': status,
+            'start_date': start_date,
+            'end_date': end_date,
+            'monthly_price': tier_config['monthly_price'],
+            'billing_cycle': 'monthly',
+            'features': json.dumps(tier_config['features']),
+            'device_limit': tier_config['device_limit'] if tier_config['device_limit'] else 999999,  # Unlimited
+            'created_at': start_date,
+            'updated_at': start_date + timedelta(days=random.randint(0, 30)),
+            'canceled_at': canceled_at,
+            'cancellation_reason': 'customer_request' if canceled_at else None,
+            'trial_start': trial_start,
+            'trial_end': trial_end,
+            'device_count': device_count  # Store for reference
+        }
+        
+        subscriptions.append(subscription)
+    
+    print(f"  Generated {len(subscriptions)} total subscriptions")
+    print(f"  Active subscriptions: {len([s for s in subscriptions if s['status'] == 'active'])}")
     
     return subscriptions
 
-def generate_subscriptions(accounts):
-    """Generate subscription data for all accounts with controlled total count"""
-    all_subscriptions = []
-    subscription_id = 1
-    
-    # Calculate target total based on environment config
-    target_total = current_env.subscriptions
-    accounts_count = len(accounts)
-    
-    print(f"Generating ~{target_total:,} subscriptions for {accounts_count:,} accounts...")
-    print(f"  Target ratio: {target_total/accounts_count:.2f} subscriptions per account")
-    
-    # Determine which accounts get history
-    accounts_with_history = set(random.sample(range(accounts_count), 
-                                            int(accounts_count * ACCOUNTS_WITH_HISTORY)))
-    
-    for i, account in enumerate(accounts):
-        include_history = i in accounts_with_history
-        account_subs = generate_subscription_for_account(account, include_history)
-        
-        for sub in account_subs[:MAX_SUBSCRIPTIONS_PER_ACCOUNT]:  # Limit subs per account
-            sub['id'] = subscription_id
-            sub['created_at'] = sub['start_date']
-            sub['updated_at'] = sub['start_date'] + timedelta(days=random.randint(0, 30))
-            all_subscriptions.append(sub)
-            subscription_id += 1
-        
-        if (i + 1) % 10000 == 0:
-            print(f"  Processed {i + 1:,} accounts... ({len(all_subscriptions):,} subscriptions)")
-    
-    print(f"  Generated {len(all_subscriptions):,} total subscriptions")
-    return all_subscriptions
-
 def insert_subscriptions(subscriptions):
     """Insert subscriptions into the database"""
-    print(f"\nInserting {len(subscriptions):,} subscriptions into database...")
-    
-    # Check table structure
-    with db_helper.config.get_cursor() as cursor:
-        cursor.execute("""
-            SELECT column_name, data_type 
-            FROM information_schema.columns 
-            WHERE table_schema = 'raw' 
-            AND table_name = 'app_database_subscriptions'
-            ORDER BY ordinal_position
-        """)
-        columns = cursor.fetchall()
-        print("\nTable structure for raw.app_database_subscriptions:")
-        for col in columns:
-            print(f"  {col[0]}: {col[1]}")
+    print(f"\nInserting {len(subscriptions)} subscriptions into database...")
     
     # Map our generated data to actual table columns
     mapped_subscriptions = []
     for sub in subscriptions:
         mapped = {
             'id': sub['id'],
-            'customer_id': sub['account_id'],  # customer_id maps to account_id
-            'plan_name': sub['plan'],
+            'customer_id': sub['customer_id'],
+            'plan_name': sub['plan_name'],
             'status': sub['status'],
             'start_date': sub['start_date'].date(),
             'end_date': sub['end_date'].date() if sub['end_date'] else None,
-            'monthly_price': sub['mrr'],
-            'billing_cycle': 'monthly',  # Default to monthly billing
+            'monthly_price': sub['monthly_price'],
+            'billing_cycle': sub['billing_cycle'],
             'created_at': sub['created_at'],
             'updated_at': sub['updated_at']
         }
@@ -216,7 +262,6 @@ def insert_subscriptions(subscriptions):
     
     # Insert using bulk insert helper
     inserted = db_helper.bulk_insert('app_database_subscriptions', mapped_subscriptions)
-    
     return inserted
 
 def save_subscription_mapping(subscriptions):
@@ -228,18 +273,20 @@ def save_subscription_mapping(subscriptions):
     )
     
     # Save the full subscription data
+    serializable_subs = []
+    for sub in subscriptions:
+        sub_copy = sub.copy()
+        sub_copy['start_date'] = sub_copy['start_date'].isoformat()
+        sub_copy['end_date'] = sub_copy['end_date'].isoformat() if sub_copy['end_date'] else None
+        sub_copy['created_at'] = sub_copy['created_at'].isoformat()
+        sub_copy['updated_at'] = sub_copy['updated_at'].isoformat()
+        sub_copy['canceled_at'] = sub_copy['canceled_at'].isoformat() if sub_copy.get('canceled_at') else None
+        sub_copy['trial_start'] = sub_copy['trial_start'].isoformat() if sub_copy.get('trial_start') else None
+        sub_copy['trial_end'] = sub_copy['trial_end'].isoformat() if sub_copy.get('trial_end') else None
+        # Features already JSON string
+        serializable_subs.append(sub_copy)
+    
     with open(mapping_file, 'w') as f:
-        # Convert datetime objects to strings
-        serializable_subs = []
-        for sub in subscriptions:
-            sub_copy = sub.copy()
-            sub_copy['start_date'] = sub_copy['start_date'].isoformat()
-            sub_copy['end_date'] = sub_copy['end_date'].isoformat() if sub_copy['end_date'] else None
-            sub_copy['created_at'] = sub_copy['created_at'].isoformat()
-            sub_copy['updated_at'] = sub_copy['updated_at'].isoformat()
-            sub_copy['canceled_at'] = sub_copy['canceled_at'].isoformat() if sub_copy.get('canceled_at') else None
-            serializable_subs.append(sub_copy)
-        
         json.dump(serializable_subs, f, indent=2)
     
     print(f"\n✓ Saved subscription mapping to {mapping_file}")
@@ -247,25 +294,11 @@ def save_subscription_mapping(subscriptions):
 def verify_subscriptions():
     """Verify the inserted subscriptions"""
     count = db_helper.get_row_count('app_database_subscriptions')
-    print(f"\n✓ Verification: {count:,} subscriptions in database")
+    print(f"\n✓ Verification: {count} subscriptions in database")
     
-    # Show sample data
-    with db_helper.config.get_cursor(dict_cursor=True) as cursor:
-        cursor.execute("""
-            SELECT s.*, a.name as account_name
-            FROM raw.app_database_subscriptions s
-            JOIN raw.app_database_accounts a ON s.customer_id = a.id
-            ORDER BY s.created_at DESC
-            LIMIT 5
-        """)
-        samples = cursor.fetchall()
-        
-        print("\nSample subscriptions (most recent):")
-        for sub in samples:
-            print(f"  {sub['account_name']} - {sub['plan_name']} - ${sub['monthly_price']}/mo - Status: {sub['status']}")
-    
-    # Show status distribution
+    # Show distribution statistics
     with db_helper.config.get_cursor() as cursor:
+        # Status distribution
         cursor.execute("""
             SELECT status, COUNT(*) as count,
                    ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 1) as percentage
@@ -273,37 +306,66 @@ def verify_subscriptions():
             GROUP BY status
             ORDER BY count DESC
         """)
-        dist = cursor.fetchall()
+        status_dist = cursor.fetchall()
         
         print("\nStatus distribution:")
-        for row in dist:
+        for row in status_dist:
             print(f"  {row[0]}: {row[1]} ({row[2]}%)")
-    
-    # Show MRR summary
-    with db_helper.config.get_cursor() as cursor:
+        
+        # Plan distribution
+        cursor.execute("""
+            SELECT plan_name, COUNT(*) as count,
+                   ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 1) as percentage
+            FROM raw.app_database_subscriptions
+            GROUP BY plan_name
+            ORDER BY count DESC
+        """)
+        plan_dist = cursor.fetchall()
+        
+        print("\nPlan distribution:")
+        for row in plan_dist:
+            print(f"  {row[0]}: {row[1]} ({row[2]}%)")
+        
+        # MRR calculation
         cursor.execute("""
             SELECT 
                 SUM(CASE WHEN status = 'active' THEN monthly_price ELSE 0 END) as active_mrr,
-                COUNT(CASE WHEN status = 'active' THEN 1 END) as active_count
+                COUNT(CASE WHEN status = 'active' THEN 1 END) as active_count,
+                AVG(CASE WHEN status = 'active' THEN monthly_price END) as avg_price
             FROM raw.app_database_subscriptions
         """)
         mrr_data = cursor.fetchone()
         
         print(f"\nMRR Summary:")
-        print(f"  Active subscriptions: {mrr_data[1]:,}")
+        print(f"  Active subscriptions: {mrr_data[1]}")
         print(f"  Total MRR: ${mrr_data[0]:,.2f}")
+        print(f"  Average price: ${mrr_data[2]:,.2f}")
+        
+        # Compare with account MRR
+        cursor.execute("""
+            SELECT COUNT(*) as active_accounts
+            FROM raw.app_database_accounts
+            WHERE id IN (
+                SELECT DISTINCT customer_id 
+                FROM raw.app_database_subscriptions 
+                WHERE status = 'active'
+            )
+        """)
+        active_accounts = cursor.fetchone()[0]
+        
+        print(f"\n✓ Active accounts with subscriptions: {active_accounts}")
 
 def main():
     """Main execution function"""
     print("=" * 60)
-    print("Subscription Generation for Bar Management SaaS Platform")
-    print(f"Environment: {current_env.name}")
+    print("Subscription Generation for TapFlow Analytics Platform")
+    print("Using deterministic configuration")
     print("=" * 60)
     
     # Check if subscriptions already exist
     existing_count = db_helper.get_row_count('app_database_subscriptions')
     if existing_count > 0:
-        print(f"\n⚠️  Warning: {existing_count:,} subscriptions already exist")
+        print(f"\n⚠️  Warning: {existing_count} subscriptions already exist")
         response = input("Do you want to truncate and regenerate? (y/N): ")
         if response.lower() == 'y':
             db_helper.truncate_table('app_database_subscriptions')
@@ -311,12 +373,8 @@ def main():
             print("Aborting...")
             return
     
-    # Load accounts
-    accounts = load_accounts()
-    print(f"\n✓ Loaded {len(accounts):,} accounts")
-    
     # Generate subscriptions
-    subscriptions = generate_subscriptions(accounts)
+    subscriptions = generate_subscriptions()
     
     # Save mapping
     save_subscription_mapping(subscriptions)
@@ -327,7 +385,7 @@ def main():
     # Verify
     verify_subscriptions()
     
-    print(f"\n✅ Successfully generated {inserted:,} subscriptions!")
+    print(f"\n✅ Successfully generated {inserted} subscriptions!")
 
 if __name__ == "__main__":
     main()
