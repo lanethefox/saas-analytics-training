@@ -185,6 +185,26 @@ def generate_accounts():
         else:
             health_score = random.randint(20, 60)
         
+        # Generate employee count and annual revenue based on size
+        if size == 'small':
+            employee_count = random.randint(1, 50)
+            annual_revenue = random.randint(100000, 5000000)  # $100K - $5M
+        elif size == 'medium':
+            employee_count = random.randint(51, 250)
+            annual_revenue = random.randint(5000000, 50000000)  # $5M - $50M
+        elif size == 'large':
+            employee_count = random.randint(251, 1000)
+            annual_revenue = random.randint(50000000, 500000000)  # $50M - $500M
+        else:  # enterprise
+            employee_count = random.randint(1001, 10000)
+            annual_revenue = random.randint(500000000, 5000000000)  # $500M - $5B
+        
+        # Status based on account age and activity
+        if is_active:
+            status = 'active'
+        else:
+            status = random.choice(['churned', 'suspended', 'pending'])
+        
         account = {
             'id': account_id,
             'name': company_name,
@@ -195,6 +215,9 @@ def generate_accounts():
             'location_count': 0,  # Will be updated by location generator
             'is_active': is_active,
             'health_score': health_score,
+            'employee_count': employee_count,
+            'annual_revenue': annual_revenue,
+            'status': status,
             'created_at': created_at,
             'updated_at': created_at + timedelta(days=random.randint(0, 30))
         }
@@ -220,6 +243,11 @@ def insert_accounts(accounts):
             'created_date': acc['created_date'],
             'business_type': acc['business_type'],
             'location_count': acc['location_count'],
+            'industry': acc['business_type'],  # Use business_type as industry
+            'employee_count': acc['employee_count'],
+            'annual_revenue': acc['annual_revenue'],
+            'website': f"https://www.{acc['name'].lower().replace(' ', '').replace('.', '')}.com",
+            'status': acc['status'],
             'created_at': acc['created_at'],
             'updated_at': acc['updated_at']
         }

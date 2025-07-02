@@ -29,6 +29,9 @@ def should_truncate():
     """Check if we should auto-truncate in Docker environment"""
     if os.environ.get('DOCKER_ENV', 'false').lower() == 'true':
         return True
+    if os.environ.get('PYTHONUNBUFFERED', '0') == '1':
+        # Running in automated mode, always truncate
+        return True
     response = input("Do you want to truncate and regenerate? (y/N): ")
     return response.lower() == 'y'
 
@@ -64,25 +67,36 @@ def get_trial_duration(account_size):
 
 def calculate_account_device_count(account_id):
     """Calculate total device count for an account"""
-    # Load device data to count devices per account
-    device_file = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)), 
-        'data', 
-        'generated_devices.json'
-    )
-    
-    # If devices haven't been generated yet, estimate based on account size
-    if not os.path.exists(device_file):
-        # Load account data
-        account_file = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)), 
-            'data', 
-            'generated_accounts.json'
-        )
-        with open(account_file, 'r') as f:
-            accounts = json.load(f)
+    # Query the database directly for device count
+    with db_helper.config.get_cursor(dict_cursor=True) as cursor:
+        cursor.execute("""
+            SELECT COUNT(DISTINCT d.id) as device_count
+            FROM raw.app_database_locations l
+            JOIN raw.app_database_devices d ON d.location_id = l.id
+            WHERE l.customer_id = %s
+        """, (account_id,))
+        result = cursor.fetchone()
         
-        account = next(a for a in accounts if a['id'] == account_id)
+        if result and result['device_count'] > 0:
+            return result['device_count']
+        
+        # If no devices found, estimate based on account type
+        cursor.execute("""
+            SELECT 
+                CASE 
+                    WHEN employee_count > 1000 OR annual_revenue > 100000000 THEN 'enterprise'
+                    WHEN employee_count > 100 OR annual_revenue > 10000000 THEN 'large'
+                    WHEN employee_count > 10 OR annual_revenue > 1000000 THEN 'medium'
+                    ELSE 'small'
+                END as account_size
+            FROM raw.app_database_accounts
+            WHERE id = %s
+        """, (account_id,))
+        account = cursor.fetchone()
+        
+        if not account:
+            return 10  # Default for missing accounts
+            
         size = account['account_size']
         distribution = config.get_account_distribution()[size]
         
@@ -90,12 +104,6 @@ def calculate_account_device_count(account_id):
         locations = (distribution['locations_min'] + distribution['locations_max']) // 2
         devices_per_loc = (distribution['devices_per_location_min'] + distribution['devices_per_location_max']) // 2
         return locations * devices_per_loc
-    
-    # Count actual devices
-    with open(device_file, 'r') as f:
-        devices = json.load(f)
-    
-    return len([d for d in devices if d['customer_id'] == account_id])
 
 def generate_subscription_history(account, current_tier, account_created):
     """Generate subscription history showing growth"""
@@ -138,20 +146,32 @@ def generate_subscription_history(account, current_tier, account_created):
 
 def generate_subscriptions():
     """Generate deterministic subscription data"""
-    # Load accounts from the saved mapping
-    mapping_file = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)), 
-        'data', 
-        'generated_accounts.json'
-    )
-    
-    with open(mapping_file, 'r') as f:
-        accounts = json.load(f)
-    
-    # Convert ISO strings back to datetime
-    for acc in accounts:
-        acc['created_at'] = datetime.fromisoformat(acc['created_at'])
-        acc['updated_at'] = datetime.fromisoformat(acc['updated_at'])
+    # Load accounts directly from the database
+    with db_helper.config.get_cursor(dict_cursor=True) as cursor:
+        cursor.execute("""
+            SELECT 
+                id,
+                name,
+                created_at,
+                updated_at,
+                -- Determine account size based on employee count and revenue
+                CASE 
+                    WHEN employee_count > 1000 OR annual_revenue > 100000000 THEN 'enterprise'
+                    WHEN employee_count > 100 OR annual_revenue > 10000000 THEN 'large'
+                    WHEN employee_count > 10 OR annual_revenue > 1000000 THEN 'medium'
+                    ELSE 'small'
+                END as account_size,
+                -- Determine if account is active based on status
+                CASE 
+                    WHEN status = 'active' THEN true
+                    WHEN status = 'churned' THEN false
+                    WHEN created_at > (CURRENT_DATE - INTERVAL '90 days') THEN true
+                    ELSE (RANDOM() < 0.85)  -- 85% of older accounts are active
+                END as is_active
+            FROM raw.app_database_accounts
+            ORDER BY id
+        """)
+        accounts = cursor.fetchall()
     
     subscriptions = []
     subscription_tiers = config.get_subscription_tiers()
@@ -175,7 +195,7 @@ def generate_subscriptions():
         trial_end = trial_start + timedelta(days=trial_duration)
         
         # Determine subscription status
-        if account['is_active']:
+        if account.get('is_active', True):  # Default to active if not specified
             status = 'active'
             start_date = trial_end
             end_date = None
@@ -306,7 +326,7 @@ def verify_subscriptions():
     print(f"\n✓ Verification: {count} subscriptions in database")
     
     # Show distribution statistics
-    with db_helper.config.get_cursor() as cursor:
+    with db_helper.config.get_cursor(dict_cursor=True) as cursor:
         # Status distribution
         cursor.execute("""
             SELECT status, COUNT(*) as count,
@@ -319,7 +339,7 @@ def verify_subscriptions():
         
         print("\nStatus distribution:")
         for row in status_dist:
-            print(f"  {row[0]}: {row[1]} ({row[2]}%)")
+            print(f"  {row['status']}: {row['count']} ({row['percentage']}%)")
         
         # Plan distribution
         cursor.execute("""
@@ -333,7 +353,7 @@ def verify_subscriptions():
         
         print("\nPlan distribution:")
         for row in plan_dist:
-            print(f"  {row[0]}: {row[1]} ({row[2]}%)")
+            print(f"  {row['plan_name']}: {row['count']} ({row['percentage']}%)")
         
         # MRR calculation
         cursor.execute("""
@@ -346,9 +366,9 @@ def verify_subscriptions():
         mrr_data = cursor.fetchone()
         
         print(f"\nMRR Summary:")
-        print(f"  Active subscriptions: {mrr_data[1]}")
-        print(f"  Total MRR: ${mrr_data[0]:,.2f}")
-        print(f"  Average price: ${mrr_data[2]:,.2f}")
+        print(f"  Active subscriptions: {mrr_data['active_count']}")
+        print(f"  Total MRR: ${mrr_data['active_mrr']:,.2f}")
+        print(f"  Average price: ${mrr_data['avg_price']:,.2f}")
         
         # Compare with account MRR
         cursor.execute("""
@@ -360,7 +380,7 @@ def verify_subscriptions():
                 WHERE status = 'active'
             )
         """)
-        active_accounts = cursor.fetchone()[0]
+        active_accounts = cursor.fetchone()['active_accounts']
         
         print(f"\n✓ Active accounts with subscriptions: {active_accounts}")
 

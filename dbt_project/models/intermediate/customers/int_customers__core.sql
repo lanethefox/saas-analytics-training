@@ -32,7 +32,7 @@ final as (
         ab.account_key,
         ab.account_name,
         ab.account_type,
-        null as industry_vertical,  -- Not available in staging
+        ab.industry as industry_vertical,  -- Now available from staging
         ab.account_status,
         
         -- Subscription information

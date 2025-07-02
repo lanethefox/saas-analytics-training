@@ -38,8 +38,9 @@ models:
       +schema: mart
     
     metrics:
-      +materialized: view
       +schema: metrics
+      # Most metrics models are now incremental tables
+      # Individual models override this setting
 
 tests:
   +store_failures: true

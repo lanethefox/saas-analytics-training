@@ -189,7 +189,7 @@ fi
 
 # Run dbt
 print_status "Running dbt transformations..."
-docker exec saas_platform_dbt_core bash -c "cd /opt/dbt_project && dbt deps && dbt seed && dbt run" || {
+docker exec saas_platform_dbt_core bash -c "cd /opt/dbt_project && dbt deps && dbt seed && dbt run --full-refresh" || {
     print_warning "dbt transformations failed. This is normal on first run if no data exists yet."
 }
 

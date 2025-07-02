@@ -14,6 +14,7 @@ import sys
 import os
 import json
 import random
+import numpy as np
 from datetime import datetime, timedelta
 from faker import Faker
 
@@ -74,7 +75,7 @@ def load_device_mappings():
     # Filter devices - only tap devices from active accounts
     tap_devices = []
     for device in devices:
-        if (device['device_type'] == 'tap' and 
+        if (device['device_type'] == 'tap_controller' and 
             device['status'] == 'Online' and
             account_lookup[device['customer_id']]['is_active']):
             # Convert dates
@@ -109,19 +110,33 @@ def get_pour_frequency(hour, day_of_week):
 
 def generate_pour_event(device, event_time):
     """Generate a beer pour event"""
+    pour_ounces = round(random.gauss(16, 4), 1)
+    volume_ml = round(pour_ounces * 29.5735, 1)
+    duration_seconds = round(random.gauss(8, 2), 1)
+    flow_rate_ml_per_sec = round(volume_ml / duration_seconds if duration_seconds > 0 else 20, 1)
+    temperature_f = round(random.gauss(38, 2), 1)
+    temperature_c = round((temperature_f - 32) * 5/9, 1)
+    pressure_psi = round(random.gauss(12, 2), 1)
+    
     return {
-        'pour_ounces': round(random.gauss(16, 4), 1),  # Average pint with variation
-        'duration_seconds': round(random.gauss(8, 2), 1),
+        'pour_ounces': pour_ounces,
+        'volume_ml': volume_ml,
+        'duration_seconds': duration_seconds,
+        'flow_rate_ml_per_sec': flow_rate_ml_per_sec,
+        'temperature_f': temperature_f,
+        'temperature_c': temperature_c,
+        'pressure_psi': pressure_psi,
         'beer_type': random.choice(['Lager', 'IPA', 'Stout', 'Wheat', 'Pilsner', 'Ale']),
-        'keg_id': f"keg_{device['location_id']}_{random.randint(1, 6)}",
-        'temperature_f': round(random.gauss(38, 2), 1),
-        'flow_rate': round(random.uniform(0.8, 1.5), 2)
+        'keg_id': f"keg_{device['location_id']}_{random.randint(1, 6)}"
     }
 
 def generate_temperature_event(device, event_time):
     """Generate a temperature reading event"""
+    temperature_f = round(random.gauss(38, 3), 1)
+    temperature_c = round((temperature_f - 32) * 5/9, 1)
     return {
-        'temperature_f': round(random.gauss(38, 3), 1),
+        'temperature_f': temperature_f,
+        'temperature_c': temperature_c,
         'target_temp_f': 38,
         'ambient_temp_f': round(random.gauss(70, 5), 1),
         'cooling_active': random.choice([True, False])
@@ -129,11 +144,12 @@ def generate_temperature_event(device, event_time):
 
 def generate_pressure_event(device, event_time):
     """Generate a pressure reading event"""
+    pressure_psi = round(random.gauss(12, 1), 1)
     return {
-        'pressure_psi': round(random.gauss(12, 1), 1),
+        'pressure_psi': pressure_psi,
         'target_psi': 12,
         'co2_level': round(random.uniform(0.1, 1.0), 2),
-        'alert': 'low_pressure' if random.random() < 0.05 else None
+        'alert': 'low_pressure' if pressure_psi < 10 else 'high_pressure' if pressure_psi > 15 else None
     }
 
 def generate_keg_level_event(device, event_time):
@@ -174,23 +190,55 @@ def generate_tap_events():
         print("No active tap devices found!")
         return []
     
-    print(f"Generating events for {len(devices)} active tap devices...")
+    # Sample devices for varied data generation
+    # Use sampling to get diverse set of devices
+    sample_size = min(20000, len(devices))  # Process up to 20k devices
+    if len(devices) > sample_size:
+        print(f"Sampling {sample_size} devices from {len(devices)} total")
+        # Sample evenly across the device list for variety
+        step = len(devices) // sample_size
+        devices = [devices[i] for i in range(0, len(devices), step)][:sample_size]
+    
+    print(f"Generating events for {len(devices)} tap devices...")
     
     events = []
-    time_config = config.config['simulation']['time_range']
-    end_date = datetime.fromisoformat(time_config['end'])
+    time_ranges = config.get_time_ranges()
+    end_date = datetime.strptime(time_ranges['end_date'], '%Y-%m-%d')
+    # Generate events for last 30 days (for health score calculations)
+    start_date_limit = end_date - timedelta(days=30)
     
     # Generate events for each device
+    device_idx = 0
     for device in devices:
-        # Start from device creation or configured start, whichever is later
+        device_idx += 1
+        
+        # Start from 30 days ago or device creation, whichever is later
         device_start = max(
             device['created_at'] + timedelta(days=1),  # Day after installation
-            datetime.fromisoformat(time_config['start'])
+            start_date_limit  # Last 30 days only
         )
         
         # Skip if device was created after end date
         if device_start > end_date:
             continue
+        
+        # Vary device activity patterns based on device index
+        # This creates natural variety in health scores
+        activity_pattern = device_idx % 10
+        
+        # Determine activity level based on pattern
+        if activity_pattern <= 2:  # 30% - Very active devices
+            skip_probability = 0.05  # Skip 5% of days
+            event_multiplier = 1.2
+        elif activity_pattern <= 5:  # 30% - Normal activity
+            skip_probability = 0.15  # Skip 15% of days
+            event_multiplier = 1.0
+        elif activity_pattern <= 7:  # 20% - Low activity
+            skip_probability = 0.40  # Skip 40% of days
+            event_multiplier = 0.6
+        else:  # 20% - Sporadic activity
+            skip_probability = 0.70  # Skip 70% of days
+            event_multiplier = 0.3
         
         # Generate events for each day
         current_date = device_start
@@ -198,8 +246,8 @@ def generate_tap_events():
             # Get day of week (0=Monday, 6=Sunday)
             day_of_week = current_date.weekday()
             
-            # Skip some days for maintenance/closure (5% chance)
-            if random.random() < 0.05:
+            # Skip days based on activity pattern
+            if random.random() < skip_probability:
                 current_date += timedelta(days=1)
                 continue
             
@@ -208,8 +256,11 @@ def generate_tap_events():
                 # Get expected pour frequency
                 pour_freq = get_pour_frequency(hour, day_of_week)
                 
+                # Apply activity multiplier to vary event frequency
+                adjusted_freq = int(pour_freq * event_multiplier)
+                
                 # Generate pour events
-                num_pours = random.poisson(pour_freq)
+                num_pours = np.random.poisson(adjusted_freq) if adjusted_freq > 0 else 0
                 for _ in range(num_pours):
                     # Random minute within the hour
                     event_time = current_date.replace(hour=hour) + timedelta(
@@ -466,7 +517,7 @@ def main():
             return
     
     # Reset ID allocator for tap events
-    id_allocator.current_ids['tap_events'] = 1
+    id_allocator.reset('tap_events')
     
     # Generate tap events
     events = generate_tap_events()

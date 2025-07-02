@@ -16,33 +16,34 @@ enriched as (
         -- Core attributes (using available columns)
         trim(name) as account_name,
         lower(business_type) as account_type,
+        business_type as industry, -- Expose industry from business_type
         email,
         location_count,
+        employee_count,
+        annual_revenue,
+        website,
+        status,
         
         -- Standardized timestamps
         created_at::timestamp as account_created_at,
         updated_at::timestamp as account_updated_at,
         
-        -- Status standardization (business_type as proxy for status)
-        case 
-            when business_type in ('enterprise', 'professional', 'business') then 'active'
-            when business_type = 'trial' then 'trial'
-            else 'active'
-        end as account_status,
+        -- Status standardization (use actual status field)
+        lower(status) as account_status,
         
-        -- Derived categorizations based on business type
+        -- Derived categorizations based on employee count (size-based)
         case 
-            when business_type = 'enterprise' then 'enterprise'
-            when business_type = 'professional' then 'mid_market'
-            when business_type = 'business' then 'small_business'
+            when employee_count > 1000 then 'enterprise'
+            when employee_count > 250 then 'mid_market'
+            when employee_count > 50 then 'small_business'
             else 'startup'
         end as company_size_category,
         
         case 
-            when business_type = 'enterprise' then 1
-            when business_type = 'professional' then 2
-            when business_type = 'business' then 3
-            else 4
+            when employee_count > 1000 then 1  -- Enterprise
+            when employee_count > 250 then 2   -- Large/Business
+            when employee_count > 50 then 3    -- Medium/Professional
+            else 4                             -- Small/Starter
         end as account_type_tier,
         
         -- Lifecycle calculations

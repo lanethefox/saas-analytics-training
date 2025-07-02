@@ -67,15 +67,37 @@ def main():
     # Define generation pipeline in order
     pipeline = [
         # Core entities
-        ("generate_accounts.py", "Generating 150 accounts"),
-        ("generate_locations.py", "Generating ~800 locations"),
-        ("generate_devices.py", "Generating ~25,000 devices"),
-        ("generate_users.py", "Generating ~5,000 users"),
-        ("generate_subscriptions.py", "Generating subscriptions with pricing tiers"),
-        # Event data - commented out for initial test
-        # ("generate_tap_events.py", "Generating tap events from devices"),
-        # ("generate_page_views.py", "Generating page view analytics"),
-        # ("generate_feature_usage.py", "Generating feature usage events"),
+        ("generate_accounts.py", "Generating accounts with industry variety"),
+        ("generate_locations.py", "Generating locations with geographic distribution"),
+        ("generate_devices.py", "Generating devices with operational variety"),
+        ("generate_users.py", "Generating users with role distribution"),
+        ("generate_subscriptions.py", "Generating subscriptions with trials and pricing tiers"),
+        
+        # Event data - now enabled for complete data
+        ("generate_tap_events_integrated.py", "Generating tap events with varied patterns"),
+        ("generate_page_views.py", "Generating page view analytics"),
+        ("generate_feature_usage.py", "Generating feature usage events"),
+        
+        # Marketing and attribution
+        ("generate_marketing_campaigns.py", "Generating multi-channel campaigns"),
+        ("generate_marketing_qualified_leads.py", "Generating MQLs"),
+        ("generate_attribution_touchpoints.py", "Generating attribution data"),
+        
+        # Financial data
+        ("generate_stripe_customers.py", "Generating payment customers"),
+        ("generate_stripe_prices.py", "Generating pricing plans"),
+        ("generate_stripe_subscriptions.py", "Generating payment subscriptions"),
+        ("generate_stripe_invoices.py", "Generating invoices"),
+        ("generate_stripe_charges.py", "Generating payment transactions"),
+        
+        # CRM data
+        ("generate_hubspot_companies.py", "Generating CRM companies"),
+        ("generate_hubspot_contacts.py", "Generating CRM contacts"),
+        ("generate_hubspot_deals.py", "Generating sales pipeline"),
+        
+        # Analytics
+        ("generate_google_analytics_sessions.py", "Generating web analytics"),
+        ("generate_user_sessions.py", "Generating user session data"),
     ]
     
     # Track success
